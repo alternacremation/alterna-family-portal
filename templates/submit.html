@@ -206,7 +206,8 @@
                 <label class="full">Children
                     <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
                 </label>
-                <div class="full section-subgroup">
+                {% set ms = form_data.get('marital_status', '') %}
+                <div class="full section-subgroup {% if ms not in ['Married', 'Common law'] %}hidden{% endif %}" data-partner-section>
                     <h3>Spouse or common law partner</h3>
                     <p class="mini">We ask these questions near the end because families often assume the parents section refers to the spouse. It does not.</p>
                 </div>
@@ -693,6 +694,7 @@ function updateToggles() {
   const relationship = document.querySelector('[name="relationship_to_deceased"]')?.value || '';
   const familyName = document.querySelector('[name="family_name"]')?.value || '';
   const reusePartner = document.querySelector('[name="reuse_contact_for_partner"]')?.value || '';
+  const partnerSection = document.querySelector('[data-partner-section]');
   const partnerFields = document.querySelector('[data-partner-fields]');
   const previousPartnerFields = document.querySelector('[data-previous-partner-fields]');
   const marriageUpload = document.querySelector('[data-marriage-upload]');
@@ -701,6 +703,7 @@ function updateToggles() {
   const showPartner = ['Married', 'Common law'].includes(maritalStatus);
   const showPreviousPartner = ['Widowed', 'Separated', 'Divorced'].includes(maritalStatus);
   const isContactPartner = ['Spouse', 'Common law partner'].includes(relationship);
+  if (partnerSection) partnerSection.classList.toggle('hidden', !showPartner);
   if (partnerFields) partnerFields.classList.toggle('hidden', !showPartner);
   if (previousPartnerFields) previousPartnerFields.classList.toggle('hidden', !showPreviousPartner);
   if (marriageUpload) marriageUpload.classList.toggle('hidden', !showPartner);
