@@ -286,3 +286,77 @@ code { background: #f3f1f6; padding: 2px 6px; border-radius: 6px; }
         text-align: center;
     }
 }
+
+
+/* v9 compact header overrides */
+.content { padding-top: 22px; }
+.topbar.compact-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+}
+.compact-brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.compact-brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+.compact-brand-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+.compact-brand-copy strong {
+    display: block;
+    font-size: 1.05rem;
+    line-height: 1.1;
+    color: var(--text-strong);
+}
+.compact-brand-copy small {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.2;
+}
+.compact-site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.compact-site-nav a {
+    font-size: 0.98rem;
+}
+@media (max-width: 920px) {
+    .topbar.compact-topbar {
+        align-items: flex-start;
+        padding: 10px 0 12px;
+    }
+    .compact-brand-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+    .compact-brand-copy strong {
+        font-size: 0.98rem;
+    }
+    .compact-brand-copy small {
+        font-size: 0.8rem;
+    }
+    .compact-site-nav {
+        width: 100%;
+        gap: 12px;
+        justify-content: flex-start;
+        padding-left: 52px;
+    }
+}
