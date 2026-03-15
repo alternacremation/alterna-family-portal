@@ -281,27 +281,67 @@
                         </div>
                     </div>
                 </div>
-                <label>Disposition type
-                    {% set disposition = form_data.get('disposition_type', '') %}
-                    <select name="disposition_type">
+                <div class="full section-subgroup">
+                    <h3>Cremation preferences</h3>
+                    <p class="mini">These questions help us prepare for the cremation and understand whether you would like to be present or receive keepsakes.</p>
+                </div>
+                <label class="full">Would you like to spend time with your loved one prior to cremation?
+                    {% set viewing_preference = form_data.get('viewing_preference', '') %}
+                    <select name="viewing_preference">
                         <option value="">Select</option>
-                        {% for option in ['Direct cremation', 'Witness cremation', 'Viewing and cremation', 'Undecided'] %}
-                        <option value="{{ option }}" {% if disposition == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
+                        <option value="no_viewing" {% if viewing_preference == 'no_viewing' %}selected{% endif %}>No, we do not wish to view the deceased prior to cremation</option>
+                        <option value="private_viewing" {% if viewing_preference == 'private_viewing' %}selected{% endif %}>Yes, we would like a private viewing</option>
+                        <option value="witness_cremation" {% if viewing_preference == 'witness_cremation' %}selected{% endif %}>Yes, we would like to witness the cremation</option>
+                        <option value="both" {% if viewing_preference == 'both' %}selected{% endif %}>Yes, we would like both a viewing and to witness the cremation</option>
+                        <option value="unsure" {% if viewing_preference == 'unsure' %}selected{% endif %}>We are not sure yet</option>
+                    </select>
+                    <span class="mini">Viewing and witnessing options can be arranged if desired. We can discuss details with you after this form is submitted.</span>
+                </label>
+                <label>Did the deceased have a pacemaker or defibrillator?
+                    {% set pacemaker_defibrillator = form_data.get('pacemaker_defibrillator', '') %}
+                    <select name="pacemaker_defibrillator">
+                        <option value="">Select</option>
+                        <option value="yes" {% if pacemaker_defibrillator == 'yes' %}selected{% endif %}>Yes</option>
+                        <option value="no" {% if pacemaker_defibrillator == 'no' %}selected{% endif %}>No</option>
+                        <option value="unsure" {% if pacemaker_defibrillator == 'unsure' %}selected{% endif %}>Not sure</option>
+                    </select>
+                    <span class="mini">These devices must be removed prior to cremation for safety.</span>
+                </label>
+                <label>Would you like us to take your loved one’s fingerprints?
+                    {% set fingerprints_choice = form_data.get('fingerprints_choice', '') %}
+                    <select name="fingerprints_choice" data-toggle-source="fingerprints_choice">
+                        <option value="">Select</option>
+                        <option value="yes" {% if fingerprints_choice == 'yes' %}selected{% endif %}>Yes, please take fingerprints</option>
+                        <option value="no" {% if fingerprints_choice == 'no' %}selected{% endif %}>No, that is not necessary</option>
+                        <option value="unsure" {% if fingerprints_choice == 'unsure' %}selected{% endif %}>I’m not sure yet</option>
+                    </select>
+                    <span class="mini">We take fingerprints at no charge. Families sometimes use them later for memorial jewelry or keepsakes. You are welcome to keep the fingerprints whether you purchase anything from us or not.</span>
+                </label>
+                <div class="toggle-block {% if form_data.get('fingerprints_choice') != 'yes' %}hidden{% endif %}" data-toggle-target="fingerprints_choice" data-toggle-value="yes">
+                    <label>Would you like a digital copy emailed to you if available?
+                        {% set fingerprint_email_copy = form_data.get('fingerprint_email_copy', '') %}
+                        <select name="fingerprint_email_copy">
+                            <option value="">Select</option>
+                            <option value="yes" {% if fingerprint_email_copy == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if fingerprint_email_copy == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </label>
+                </div>
+                <label>Was your loved one wearing any jewelry or personal items that should be removed prior to cremation?
+                    {% set valuables_remove_choice = form_data.get('valuables_remove_choice', '') %}
+                    <select name="valuables_remove_choice" data-toggle-source="valuables_remove_choice">
+                        <option value="">Select</option>
+                        <option value="yes" {% if valuables_remove_choice == 'yes' %}selected{% endif %}>Yes</option>
+                        <option value="no" {% if valuables_remove_choice == 'no' %}selected{% endif %}>No</option>
+                        <option value="unsure" {% if valuables_remove_choice == 'unsure' %}selected{% endif %}>Not sure</option>
                     </select>
                 </label>
-                <label>Informant name
-                    <input name="informant_name" value="{{ form_data.get('informant_name', '') }}">
-                </label>
-                <label>Informant email
-                    <input type="email" name="informant_email" value="{{ form_data.get('informant_email', '') }}">
-                </label>
-                <label>Informant phone
-                    <input name="informant_phone" value="{{ form_data.get('informant_phone', '') }}">
-                </label>
-                <label class="full">Informant address
-                    <textarea name="informant_address" rows="3">{{ form_data.get('informant_address', '') }}</textarea>
-                </label>
+                <div class="full toggle-block {% if form_data.get('valuables_remove_choice') != 'yes' %}hidden{% endif %}" data-toggle-target="valuables_remove_choice" data-toggle-value="yes">
+                    <label>Please describe the items
+                        <textarea name="valuables_remove_details" rows="3">{{ form_data.get('valuables_remove_details', '') }}</textarea>
+                        <span class="mini">Examples include rings, watches, necklaces, or other personal items to be returned before cremation.</span>
+                    </label>
+                </div>
                 <label>Last 4 digits of SIN (optional)
                     <input name="sin_last_four" value="{{ form_data.get('sin_last_four', '') }}">
                 </label>
@@ -309,7 +349,7 @@
         </section>
 
         <section class="wizard-panel" data-step="4">
-            <div class="section-divider"><h2>Obituary & tributes</h2><p class="mini">Not everyone chooses to publish an obituary. If you would like one, we can help you write and publish it here. You can also return later to add one.</p></div>
+            <div class="section-divider"><h2>Obituary & Tributes</h2><p class="mini">Not everyone chooses to publish an obituary. If you would like one, we can help you write and publish it here. You can also return later to add one.</p></div>
             <div class="grid two">
                 <label class="full">Would you like an obituary or tribute notice?
                     {% set obituary_request = form_data.get('obituary_request', '') %}
@@ -477,9 +517,19 @@
                         <label class="full">Photo notes or captions
                             <textarea name="photo_notes" rows="4">{{ form_data.get('photo_notes', '') }}</textarea>
                         </label>
-                        <label>Preferred photo deadline
-                            <input type="date" name="photo_deadline" value="{{ form_data.get('photo_deadline', '') }}">
-                        </label>
+                        <div class="full toggle-block {% if obituary_request not in ['newspaper', 'both'] %}hidden{% endif %}" data-toggle-target="obituary_request_newspaper">
+                            <label>Preferred publication date
+                                <select data-publication-saturday-select>
+                                    <option value="">Select</option>
+                                </select>
+                                <span class="mini">Saturday publication in the Winnipeg Free Press typically has the highest readership for no additional cost, so we recommend Saturdays.</span>
+                            </label>
+                            <label class="toggle-block hidden" data-publication-custom-wrap>Choose another publication date
+                                <input type="date" data-publication-custom-input>
+                                <span class="mini">If you need a date other than a recommended Saturday, enter it here.</span>
+                            </label>
+                            <input type="hidden" name="photo_deadline" value="{{ form_data.get('photo_deadline', '') }}" data-publication-hidden>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -517,6 +567,72 @@ const prev = document.querySelector('[data-prev]');
 const next = document.querySelector('[data-next]');
 const submit = document.querySelector('[data-submit]');
 let current = 0;
+
+function formatDateForInput(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+function formatDateLabel(date) {
+  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+}
+function nextSelectableSaturdays() {
+  const now = new Date();
+  const options = [];
+  let candidate = new Date(now);
+  candidate.setHours(0, 0, 0, 0);
+  while (candidate.getDay() !== 6) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
+  const isFridayAfterNoon = now.getDay() === 5 && now.getHours() >= 12;
+  if (candidate.toDateString() === now.toDateString() || isFridayAfterNoon) {
+    candidate.setDate(candidate.getDate() + 7);
+  }
+  for (let i = 0; i < 4; i += 1) {
+    const copy = new Date(candidate);
+    copy.setDate(candidate.getDate() + (7 * i));
+    options.push(copy);
+  }
+  return options;
+}
+function updatePublicationDateChoices() {
+  const select = document.querySelector('[data-publication-saturday-select]');
+  const customWrap = document.querySelector('[data-publication-custom-wrap]');
+  const customInput = document.querySelector('[data-publication-custom-input]');
+  const hiddenInput = document.querySelector('[data-publication-hidden]');
+  if (!select || !hiddenInput) return;
+  const currentHidden = hiddenInput.value || '';
+  const existingCustom = customInput?.value || '';
+  if (select.options.length <= 1) {
+    const saturdays = nextSelectableSaturdays();
+    saturdays.forEach((date, index) => {
+      const opt = document.createElement('option');
+      opt.value = formatDateForInput(date);
+      opt.textContent = `${formatDateLabel(date)}${index === 0 ? ' (recommended)' : ''}`;
+      select.appendChild(opt);
+    });
+    const other = document.createElement('option');
+    other.value = 'custom';
+    other.textContent = 'Other date';
+    select.appendChild(other);
+  }
+  const saturdayValues = Array.from(select.options).map((o) => o.value);
+  if (currentHidden && saturdayValues.includes(currentHidden)) {
+    select.value = currentHidden;
+  } else if (currentHidden) {
+    select.value = 'custom';
+    if (customInput) customInput.value = currentHidden;
+  }
+  const useCustom = select.value === 'custom';
+  if (customWrap) customWrap.classList.toggle('hidden', !useCustom);
+  if (useCustom) {
+    hiddenInput.value = customInput?.value || currentHidden || '';
+  } else if (select.value) {
+    hiddenInput.value = select.value;
+  }
+}
+
 const currentStepLabel = document.querySelector('[data-current-step-label-header]');
 function renderStep() {
   panels.forEach((panel, index) => panel.classList.toggle('active', index === current));
@@ -604,13 +720,15 @@ function updateToggles() {
   }
   if (wordCountEl) wordCountEl.textContent = `Word count: ${words}`;
   if (estimateEl) estimateEl.textContent = `Estimated total: $${estimate}`;
+  updatePublicationDateChoices();
 }
-document.querySelectorAll('[data-toggle-source], [name="newspaper_photo_choice"], [name="newspaper_obituary_text"], [name="obituary_text"], [name="website_obituary_text"]').forEach((source) => {
+document.querySelectorAll('[data-toggle-source], [name="newspaper_photo_choice"], [name="newspaper_obituary_text"], [name="obituary_text"], [name="website_obituary_text"], [data-publication-saturday-select], [data-publication-custom-input]').forEach((source) => {
   source.addEventListener('change', updateToggles);
   source.addEventListener('input', updateToggles);
 });
 prev.addEventListener('click', () => { if (current > 0) { current -= 1; renderStep(); } });
 next.addEventListener('click', () => { if (current < panels.length - 1) { current += 1; renderStep(); } });
+updatePublicationDateChoices();
 updateToggles();
 renderStep();
 </script>
