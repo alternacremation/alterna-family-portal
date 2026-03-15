@@ -163,33 +163,7 @@
                 <label>Province / state / country of birth
                     <input name="birth_region_country" value="{{ form_data.get('birth_region_country', '') }}">
                 </label>
-                <div class="full section-subgroup">
-                    <h3>Vital statistics</h3>
-                    <p class="mini">This section is still about the deceased.</p>
-                </div>
-                <label>Was the deceased retired?
-                    {% set retired = form_data.get('retired_status', '') %}
-                    <select name="retired_status">
-                        <option value="">Select</option>
-                        {% for option in ['No', 'Yes'] %}
-                        <option value="{{ option }}" {% if retired == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>Occupation
-                    <input name="occupation" value="{{ form_data.get('occupation', '') }}">
-                    <span class="mini">If retired, enter the most recent occupation.</span>
-                </label>
-                <label>Industry
-                    <input name="industry" value="{{ form_data.get('industry', '') }}">
-                    <span class="mini">If retired, enter the most recent industry.</span>
-                </label>
-                <label>Social Insurance Number (SIN)
-                    <input name="sin_last_four" value="{{ form_data.get('sin_last_four', '') }}">
-                </label>
-                <label>Usual residence
-                    <input name="usual_residence" value="{{ form_data.get('usual_residence', '') }}">
-                </label>
+                
                 <div class="full section-subgroup">
                     <h3>Parents of the deceased</h3>
                     <p class="mini">The next questions refer to the deceased’s parents, not the spouse or partner.</p>
@@ -197,12 +171,34 @@
                 <label>Father’s full name
                     <input name="father_name" value="{{ form_data.get('father_name', '') }}">
                 </label>
-                <label>Mother’s full name
-                    <input name="mother_name" value="{{ form_data.get('mother_name', '') }}">
+                <label>Father’s place of birth
+                    <input name="father_birthplace" value="{{ form_data.get('father_birthplace', '') }}">
                 </label>
-                <label>Mother’s maiden name
-                    <input name="mother_maiden_name" value="{{ form_data.get('mother_maiden_name', '') }}">
+                <label>Mother’s name at birth
+                    <input name="mother_birth_name" value="{{ form_data.get('mother_birth_name', '') }}">
                 </label>
+                <label>Mother’s place of birth
+                    <input name="mother_birthplace" value="{{ form_data.get('mother_birthplace', '') }}">
+                </label>
+                <div class="full section-subgroup">
+                    <h3>Survivor benefits screening</h3>
+                    <p class="mini">We assist families with survivor benefits if applicable.</p>
+                </div>
+                <label>Did the deceased have any children under the age of 18?
+                    <select name="children_under_18">
+                        <option value="">Select</option>
+                        <option value="yes" {% if form_data.get('children_under_18')=='yes' %}selected{% endif %}>Yes</option>
+                        <option value="no" {% if form_data.get('children_under_18')=='no' %}selected{% endif %}>No</option>
+                    </select>
+                </label>
+                <label>Did the deceased have any children under the age of 25 attending a recognized post‑secondary institution?
+                    <select name="children_under_25_student">
+                        <option value="">Select</option>
+                        <option value="yes" {% if form_data.get('children_under_25_student')=='yes' %}selected{% endif %}>Yes</option>
+                        <option value="no" {% if form_data.get('children_under_25_student')=='no' %}selected{% endif %}>No</option>
+                    </select>
+                </label>
+
                 <label class="full">Children
                     <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
                 </label>
