@@ -1,11 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Start family intake{% endblock %}
+{% block section_tracker %}
+<div class="section-tracker" aria-live="polite">
+    <div class="container">
+        <span class="section-tracker-label">You are working on</span>
+        <strong data-current-step-label-header>1. Start here</strong>
+    </div>
+</div>
+{% endblock %}
 {% block content %}
 <section class="card form-shell">
     <div class="section-title">
         <p class="eyebrow">Family intake</p>
         <h1>We’ll guide you through a few simple steps.</h1>
-        <p>You can provide the details we need for registration, obituary drafting, photo collection, and authorization. Estimated time: 10 to 15 minutes.</p>
+        <p>This testing version uses Alterna-inspired colours and softer language. All fields are optional for now, so you can focus on flow and clarity before anything becomes client-facing.</p>
     </div>
 
     <div class="wizard-bar">
@@ -16,42 +24,153 @@
 
     <form method="post" enctype="multipart/form-data" class="form-grid wizard-form" novalidate>
         <section class="wizard-panel active" data-step="1">
-            <h2>About your loved one</h2>
+            <h2>Start here</h2>
             <div class="grid two">
-                <label>Case reference
-                    <input name="case_reference" value="{{ form_data.get('case_reference', '') }}" required>
+                <label class="full">Has a death occurred?
+                    {% set intake = form_data.get('intake_type', '') %}
+                    <select name="intake_type" data-toggle-source="intake_type">
+                        <option value="">Select</option>
+                        <option value="death_occurred" {% if intake == 'death_occurred' %}selected{% endif %}>Yes, a death has occurred</option>
+                        <option value="preplanning" {% if intake == 'preplanning' %}selected{% endif %}>No, a death has not occurred, I am pre-planning</option>
+                    </select>
                 </label>
-                <label>Relationship to the deceased
-                    <input name="relationship_to_deceased" value="{{ form_data.get('relationship_to_deceased', '') }}">
+
+                <div class="full toggle-block {% if intake != 'preplanning' %}hidden{% endif %}" data-toggle-target="intake_type" data-toggle-value="preplanning">
+                    <label>Are you pre-planning for yourself or someone else?
+                        {% set preplanning_for = form_data.get('preplanning_for', '') %}
+                        <select name="preplanning_for">
+                            <option value="">Select</option>
+                            <option value="myself" {% if preplanning_for == 'myself' %}selected{% endif %}>Myself</option>
+                            <option value="someone_else" {% if preplanning_for == 'someone_else' %}selected{% endif %}>Someone else</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="full toggle-block {% if intake != 'death_occurred' %}hidden{% endif %}" data-toggle-target="intake_type" data-toggle-value="death_occurred">
+                    <div class="grid two nested-grid">
+                        {% set location_type = form_data.get('location_type', '') %}
+                        <label>Where is your loved one right now?
+                            <select name="location_type" data-toggle-source="location_type">
+                                <option value="">Select</option>
+                                {% for option in location_options %}
+                                <option value="{{ option }}" {% if location_type == option %}selected{% endif %}>{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <div class="toggle-block full {% if location_type != 'Hospital' %}hidden{% endif %}" data-toggle-target="location_type" data-toggle-value="Hospital">
+                            {% set hospital_name = form_data.get('hospital_name', '') %}
+                            <div class="grid two nested-grid">
+                                <label>Which hospital?
+                                    <select name="hospital_name" data-toggle-source="hospital_name">
+                                        <option value="">Select</option>
+                                        {% for option in hospital_options %}
+                                        <option value="{{ option }}" {% if hospital_name == option %}selected{% endif %}>{{ option }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+                                <div class="toggle-block {% if hospital_name != 'Other' %}hidden{% endif %}" data-toggle-target="hospital_name" data-toggle-value="Other">
+                                    <label>Please tell us which hospital
+                                        <input name="hospital_other" value="{{ form_data.get('hospital_other', '') }}">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="toggle-block full {% if location_type not in ['Personal care home / nursing home', 'Residence', 'Other funeral home', 'Other'] %}hidden{% endif %}" data-toggle-target="location_type_multi">
+                            <label>Please tell us the name or address
+                                <input name="location_details" value="{{ form_data.get('location_details', '') }}">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="wizard-panel" data-step="2">
+            <div class="section-divider"><h2>About you</h2><p class="mini">Please tell us about yourself first.</p></div>
+            <p class="mini">We need your contact information so we know who is completing this form.</p>
+            <div class="grid two">
+                <label>Your full name
+                    <input name="family_name" value="{{ form_data.get('family_name', '') }}">
                 </label>
-                <label>Family contact name
-                    <input name="family_name" value="{{ form_data.get('family_name', '') }}" required>
+                <label>Your email address
+                    <input type="email" name="family_email" value="{{ form_data.get('family_email', '') }}">
                 </label>
-                <label>Family email
-                    <input type="email" name="family_email" value="{{ form_data.get('family_email', '') }}" required>
+                <label>Your phone number
+                    <input name="family_phone" value="{{ form_data.get('family_phone', '') }}">
                 </label>
-                <label>Family phone
-                    <input name="family_phone" value="{{ form_data.get('family_phone', '') }}" required>
+                <label>Your relationship to the deceased
+                    {% set rel = form_data.get('relationship_to_deceased', '') %}
+                    <select name="relationship_to_deceased">
+                        <option value="">Select</option>
+                        {% for option in ['Spouse', 'Common law partner', 'Child', 'Parent', 'Sibling', 'Executor', 'Friend', 'Other'] %}
+                        <option value="{{ option }}" {% if rel == option %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
                 </label>
-                <label>Preferred name
+                <label>Did the deceased leave a will?
+                    {% set will_status = form_data.get('will_status', '') %}
+                    <select name="will_status" data-toggle-source="will_status">
+                        <option value="">Select</option>
+                        <option value="Yes" {% if will_status == 'Yes' %}selected{% endif %}>Yes</option>
+                        <option value="No" {% if will_status == 'No' %}selected{% endif %}>No</option>
+                        <option value="Unsure" {% if will_status == 'Unsure' %}selected{% endif %}>Unsure</option>
+                    </select>
+                </label>
+
+                <div class="full toggle-block {% if will_status != 'Yes' %}hidden{% endif %}" data-toggle-target="will_status" data-toggle-value="Yes">
+                    <div class="grid two nested-grid">
+                        <label>Who is the executor?
+                            {% set same = form_data.get('executor_is_contact', '') %}
+                            <select name="executor_is_contact" data-toggle-source="executor_is_contact">
+                                <option value="">Select</option>
+                                <option value="same_person" {% if same == 'same_person' %}selected{% endif %}>Same person as above</option>
+                                <option value="other_person" {% if same == 'other_person' %}selected{% endif %}>Someone else</option>
+                            </select>
+                        </label>
+
+                        <div class="toggle-block {% if same != 'other_person' %}hidden{% endif %} full" data-toggle-target="executor_is_contact" data-toggle-value="other_person">
+                            <div class="grid two nested-grid">
+                                <label>Executor name
+                                    <input name="executor_name" value="{{ form_data.get('executor_name', '') }}">
+                                </label>
+                                <label>Executor phone
+                                    <input name="executor_phone" value="{{ form_data.get('executor_phone', '') }}">
+                                </label>
+                                <label class="full">Executor email
+                                    <input type="email" name="executor_email" value="{{ form_data.get('executor_email', '') }}">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="wizard-panel" data-step="3">
+            <div class="section-divider"><h2>About the deceased</h2></div>
+            <p class="mini">Now tell us about the person who has died, or the person you are pre-planning for.</p>
+            <div class="grid two">
+                <label>Preferred name of the deceased
                     <input name="preferred_name" value="{{ form_data.get('preferred_name', '') }}">
                 </label>
-                <label>Legal first name
-                    <input name="deceased_first_name" value="{{ form_data.get('deceased_first_name', '') }}" required>
+                <label>Legal first name of the deceased
+                    <input name="deceased_first_name" value="{{ form_data.get('deceased_first_name', '') }}">
                 </label>
                 <label>Middle name
                     <input name="deceased_middle_name" value="{{ form_data.get('deceased_middle_name', '') }}">
                 </label>
-                <label>Last name
-                    <input name="deceased_last_name" value="{{ form_data.get('deceased_last_name', '') }}" required>
+                <label>Last name of the deceased
+                    <input name="deceased_last_name" value="{{ form_data.get('deceased_last_name', '') }}">
                 </label>
-                <label>Gender
+                <label>Sex
                     <select name="deceased_gender">
-                        {% set gender = form_data.get('deceased_gender', '') %}
+                        {% set sex = form_data.get('deceased_gender', '') %}
                         <option value="">Select</option>
-                        <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
-                        <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
-                        <option value="Other" {% if gender == 'Other' %}selected{% endif %}>Other</option>
+                        <option value="Female" {% if sex == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Male" {% if sex == 'Male' %}selected{% endif %}>Male</option>
                     </select>
                 </label>
                 <label>Date of birth
@@ -60,47 +179,80 @@
                 <label>Date of death
                     <input type="date" name="date_of_death" value="{{ form_data.get('date_of_death', '') }}">
                 </label>
-                <label>Place of death
-                    <input name="place_of_death" value="{{ form_data.get('place_of_death', '') }}">
-                </label>
-                <label>Usual residence
-                    <input name="usual_residence" value="{{ form_data.get('usual_residence', '') }}">
-                </label>
-                <label>Occupation
-                    <input name="occupation" value="{{ form_data.get('occupation', '') }}">
-                </label>
-                <label>Last 4 digits of SIN (optional)
-                    <input name="sin_last_four" value="{{ form_data.get('sin_last_four', '') }}">
-                </label>
-            </div>
-        </section>
-
-        <section class="wizard-panel" data-step="2">
-            <h2>Vital statistics</h2>
-            <div class="grid two">
-                <label>Birth city or town
-                    <input name="birth_city" value="{{ form_data.get('birth_city', '') }}">
-                </label>
-                <label>Birth province, state, or country
-                    <input name="birth_region_country" value="{{ form_data.get('birth_region_country', '') }}">
-                </label>
-                <label>Citizenship
-                    <input name="citizenship" value="{{ form_data.get('citizenship', '') }}">
-                </label>
                 <label>Marital status
-                    <select name="marital_status">
-                        {% set marital = form_data.get('marital_status', '') %}
+                    {% set marital = form_data.get('marital_status', '') %}
+                    <select name="marital_status" data-toggle-source="marital_status">
                         <option value="">Select</option>
-                        {% for option in ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'] %}
+                        {% for option in ['Never married', 'Married', 'Common law', 'Widowed', 'Separated', 'Divorced'] %}
                         <option value="{{ option }}" {% if marital == option %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}
                     </select>
                 </label>
-                <label>Spouse or partner name
-                    <input name="spouse_name" value="{{ form_data.get('spouse_name', '') }}">
+                <label>City of birth
+                    <input name="birth_city" value="{{ form_data.get('birth_city', '') }}">
                 </label>
-                <label class="full">Children
-                    <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
+                <label>Province / state / country of birth
+                    <input name="birth_region_country" value="{{ form_data.get('birth_region_country', '') }}">
+                </label>
+                <label>Was the deceased retired?
+                    {% set retired = form_data.get('retired_status', '') %}
+                    <select name="retired_status">
+                        <option value="">Select</option>
+                        {% for option in ['No', 'Yes'] %}
+                        <option value="{{ option }}" {% if retired == option %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Occupation
+                    <input name="occupation" value="{{ form_data.get('occupation', '') }}">
+                    <span class="mini">If retired, enter the most recent occupation.</span>
+                </label>
+                <label>Industry
+                    <input name="industry" value="{{ form_data.get('industry', '') }}">
+                    <span class="mini">If retired, enter the most recent industry.</span>
+                </label>
+                <div class="full grid two hidden" data-partner-fields>
+                    {% set rel = form_data.get('relationship_to_deceased', '') %}
+                    {% set reuse = form_data.get('reuse_contact_for_partner', '') %}
+                    <div class="full toggle-block {% if rel not in ['Spouse', 'Common law partner'] %}hidden{% endif %}" data-contact-partner-helper>
+                        <label>Use some of your information above for the partner section?
+                            <select name="reuse_contact_for_partner" data-toggle-source="reuse_contact_for_partner">
+                                <option value="">Select</option>
+                                <option value="yes" {% if reuse == 'yes' %}selected{% endif %}>Yes, use my name above for the partner’s current legal name</option>
+                                <option value="no" {% if reuse == 'no' %}selected{% endif %}>No, I will enter it manually</option>
+                            </select>
+                        </label>
+                        <p class="mini">This is helpful if the person completing the form is the spouse or common law partner.</p>
+                    </div>
+                    <label>Partner’s full name at birth
+                        <input name="partner_birth_name" value="{{ form_data.get('partner_birth_name', '') }}">
+                    </label>
+                    <label>Partner’s current legal name
+                        <input name="partner_current_legal_name" value="{{ form_data.get('partner_current_legal_name', '') or form_data.get('spouse_name', '') }}">
+                    </label>
+                    <label>Partner’s SIN
+                        <input name="partner_sin" value="{{ form_data.get('partner_sin', '') }}">
+                    </label>
+                    <label>Partner’s date of birth
+                        <input type="date" name="partner_date_of_birth" value="{{ form_data.get('partner_date_of_birth', '') }}">
+                    </label>
+                    <label>Partner’s place of birth
+                        <input name="partner_place_of_birth" value="{{ form_data.get('partner_place_of_birth', '') }}">
+                    </label>
+                    <label>Date of marriage
+                        <input type="date" name="date_of_marriage" value="{{ form_data.get('date_of_marriage', '') }}">
+                    </label>
+                </div>
+                <div class="full grid two hidden" data-previous-partner-fields>
+                    <label>Previous spouse’s full name at birth
+                        <input name="previous_partner_birth_name" value="{{ form_data.get('previous_partner_birth_name', '') }}">
+                    </label>
+                    <label>Previous spouse’s place of birth
+                        <input name="previous_partner_place_of_birth" value="{{ form_data.get('previous_partner_place_of_birth', '') }}">
+                    </label>
+                </div>
+                <label>Usual residence
+                    <input name="usual_residence" value="{{ form_data.get('usual_residence', '') }}">
                 </label>
                 <label>Father’s full name
                     <input name="father_name" value="{{ form_data.get('father_name', '') }}">
@@ -111,9 +263,12 @@
                 <label>Mother’s maiden name
                     <input name="mother_maiden_name" value="{{ form_data.get('mother_maiden_name', '') }}">
                 </label>
+                <label class="full">Children
+                    <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
+                </label>
                 <label>Disposition type
+                    {% set disposition = form_data.get('disposition_type', '') %}
                     <select name="disposition_type">
-                        {% set disposition = form_data.get('disposition_type', '') %}
                         <option value="">Select</option>
                         {% for option in ['Direct cremation', 'Witness cremation', 'Viewing and cremation', 'Undecided'] %}
                         <option value="{{ option }}" {% if disposition == option %}selected{% endif %}>{{ option }}</option>
@@ -121,7 +276,7 @@
                     </select>
                 </label>
                 <label>Informant name
-                    <input name="informant_name" value="{{ form_data.get('informant_name', '') }}" required>
+                    <input name="informant_name" value="{{ form_data.get('informant_name', '') }}">
                 </label>
                 <label>Informant email
                     <input type="email" name="informant_email" value="{{ form_data.get('informant_email', '') }}">
@@ -132,25 +287,30 @@
                 <label class="full">Informant address
                     <textarea name="informant_address" rows="3">{{ form_data.get('informant_address', '') }}</textarea>
                 </label>
+                <label>Last 4 digits of SIN (optional)
+                    <input name="sin_last_four" value="{{ form_data.get('sin_last_four', '') }}">
+                </label>
             </div>
         </section>
 
-        <section class="wizard-panel" data-step="3">
-            <h2>Obituary</h2>
+        <section class="wizard-panel" data-step="4">
+            <div class="section-divider"><h2>Obituary and files</h2><p class="mini">These items are optional and can be completed later.</p></div>
             <div class="grid two">
                 <label>Obituary style
+                    {% set style = form_data.get('obituary_style', '') %}
                     <select name="obituary_style">
-                        {% set style = form_data.get('obituary_style', '') %}
-                        {% for option in ['', 'Simple announcement', 'Traditional obituary', 'Celebration of life', 'No obituary'] %}
-                        <option value="{{ option }}" {% if style == option %}selected{% endif %}>{{ option or 'Select' }}</option>
+                        <option value="">Select</option>
+                        {% for option in ['Simple announcement', 'Traditional obituary', 'Celebration of life', 'No obituary'] %}
+                        <option value="{{ option }}" {% if style == option %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}
                     </select>
                 </label>
                 <label>Obituary tone
+                    {% set tone = form_data.get('obituary_tone', '') %}
                     <select name="obituary_tone">
-                        {% set tone = form_data.get('obituary_tone', '') %}
-                        {% for option in ['', 'Warm and simple', 'Traditional', 'Celebratory'] %}
-                        <option value="{{ option }}" {% if tone == option %}selected{% endif %}>{{ option or 'Select' }}</option>
+                        <option value="">Select</option>
+                        {% for option in ['Warm and simple', 'Traditional', 'Celebratory'] %}
+                        <option value="{{ option }}" {% if tone == option %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}
                     </select>
                 </label>
@@ -169,16 +329,16 @@
                 <label class="full">Draft obituary text (optional, leave blank and the portal will create a simple draft)
                     <textarea class="obituary-box" name="obituary_text" rows="10">{{ form_data.get('obituary_text', '') }}</textarea>
                 </label>
-            </div>
-        </section>
-
-        <section class="wizard-panel" data-step="4">
-            <h2>Photos and documents</h2>
-            <div class="grid two">
                 <label class="full">Upload photos or documents
                     <input type="file" name="memorial_files" multiple>
                     <span class="mini">Accepted formats: JPG, PNG, WEBP, HEIC, PDF, DOC, DOCX</span>
                 </label>
+                <div class="full hidden" data-marriage-upload>
+                    <label class="full">Marriage certificate (optional)
+                        <input type="file" name="memorial_files" multiple>
+                        <span class="mini">If you do not have it handy, you can upload it later by returning to the portal.</span>
+                    </label>
+                </div>
                 <label class="full">Photo notes or captions
                     <textarea name="photo_notes" rows="4">{{ form_data.get('photo_notes', '') }}</textarea>
                 </label>
@@ -189,22 +349,26 @@
         </section>
 
         <section class="wizard-panel" data-step="5">
-            <h2>Authorization</h2>
+            <div class="section-divider"><h2>Review and submit</h2><p class="mini">Nothing is required in this testing build. Submit whatever you want to preview.</p></div>
             <div class="grid two">
-                <label>Type your name as your signature
-                    <input name="signature_name" value="{{ form_data.get('signature_name', '') }}" required>
+                <label>Type your name as your signature (optional for now)
+                    <input name="signature_name" value="{{ form_data.get('signature_name', '') }}">
                 </label>
                 <label class="checkbox-row full">
                     <input type="checkbox" name="privacy_consent" {% if form_data.get('privacy_consent') %}checked{% endif %}>
-                    <span>I confirm I have the legal authority to provide this information and authorize Alterna Cremation to use it for registration, documentation, and obituary drafting.</span>
+                    <span>I confirm the information above is accurate to the best of my knowledge.</span>
                 </label>
+                <div class="full card inner-card accent-card">
+                    <p><strong>Testing mode:</strong> nothing is required in this version.</p>
+                    <p class="mini">Submit whatever you want so we can test the flow, wording, and mobile experience.</p>
+                </div>
             </div>
         </section>
 
         <div class="wizard-actions">
             <button type="button" class="button secondary" data-prev>Back</button>
             <button type="button" class="button secondary" data-next>Next</button>
-            <button type="submit" class="button" data-submit hidden>Create family portal</button>
+            <button type="submit" class="button" data-submit hidden>Submit information</button>
         </div>
     </form>
 </section>
@@ -216,15 +380,56 @@ const prev = document.querySelector('[data-prev]');
 const next = document.querySelector('[data-next]');
 const submit = document.querySelector('[data-submit]');
 let current = 0;
+const currentStepLabel = document.querySelector('[data-current-step-label-header]');
 function renderStep() {
   panels.forEach((panel, index) => panel.classList.toggle('active', index === current));
   pills.forEach((pill, index) => pill.classList.toggle('active', index <= current));
-  prev.disabled = current === 0;
+  prev.hidden = current === 0;
   next.hidden = current === panels.length - 1;
   submit.hidden = current !== panels.length - 1;
+  if (currentStepLabel && pills[current]) {
+    currentStepLabel.textContent = pills[current].textContent.trim();
+  }
 }
+function updateToggles() {
+  document.querySelectorAll('[data-toggle-source]').forEach((source) => {
+    const key = source.getAttribute('data-toggle-source');
+    const value = source.value;
+    document.querySelectorAll(`[data-toggle-target="${key}"]`).forEach((target) => {
+      target.classList.toggle('hidden', target.getAttribute('data-toggle-value') !== value);
+    });
+  });
+  const locationType = document.querySelector('[name="location_type"]')?.value || '';
+  const multiLocation = document.querySelector('[data-toggle-target="location_type_multi"]');
+  if (multiLocation) {
+    multiLocation.classList.toggle('hidden', !['Personal care home / nursing home', 'Residence', 'Other funeral home', 'Other'].includes(locationType));
+  }
+  const maritalStatus = document.querySelector('[name="marital_status"]')?.value || '';
+  const relationship = document.querySelector('[name="relationship_to_deceased"]')?.value || '';
+  const familyName = document.querySelector('[name="family_name"]')?.value || '';
+  const reusePartner = document.querySelector('[name="reuse_contact_for_partner"]')?.value || '';
+  const partnerFields = document.querySelector('[data-partner-fields]');
+  const previousPartnerFields = document.querySelector('[data-previous-partner-fields]');
+  const marriageUpload = document.querySelector('[data-marriage-upload]');
+  const partnerHelper = document.querySelector('[data-contact-partner-helper]');
+  const partnerCurrentLegalName = document.querySelector('[name="partner_current_legal_name"]');
+  const showPartner = ['Married', 'Common law'].includes(maritalStatus);
+  const showPreviousPartner = ['Widowed', 'Separated', 'Divorced'].includes(maritalStatus);
+  const isContactPartner = ['Spouse', 'Common law partner'].includes(relationship);
+  if (partnerFields) partnerFields.classList.toggle('hidden', !showPartner);
+  if (previousPartnerFields) previousPartnerFields.classList.toggle('hidden', !showPreviousPartner);
+  if (marriageUpload) marriageUpload.classList.toggle('hidden', !showPartner);
+  if (partnerHelper) partnerHelper.classList.toggle('hidden', !(showPartner && isContactPartner));
+  if (partnerCurrentLegalName && showPartner && isContactPartner && reusePartner === 'yes' && familyName.trim()) {
+    partnerCurrentLegalName.value = familyName.trim();
+  }
+}
+document.querySelectorAll('[data-toggle-source]').forEach((source) => {
+  source.addEventListener('change', updateToggles);
+});
 prev.addEventListener('click', () => { if (current > 0) { current -= 1; renderStep(); } });
 next.addEventListener('click', () => { if (current < panels.length - 1) { current += 1; renderStep(); } });
+updateToggles();
 renderStep();
 </script>
 {% endblock %}

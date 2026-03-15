@@ -44,9 +44,7 @@
     <form method="post" enctype="multipart/form-data" class="form-grid">
         <input type="hidden" name="action" value="save_form">
         <div class="grid two">
-            <label>Case reference
-                <input name="case_reference" value="{{ row['case_reference'] }}">
-            </label>
+            <input type="hidden" name="case_reference" value="{{ row['case_reference'] }}">
             <label>Relationship to the deceased
                 <input name="relationship_to_deceased" value="{{ row['relationship_to_deceased'] or '' }}">
             </label>
@@ -86,14 +84,32 @@
             <label>Birth province, state, or country
                 <input name="birth_region_country" value="{{ row['birth_region_country'] or '' }}">
             </label>
-            <label>Citizenship
-                <input name="citizenship" value="{{ row['citizenship'] or '' }}">
-            </label>
             <label>Marital status
                 <input name="marital_status" value="{{ row['marital_status'] or '' }}">
             </label>
-            <label>Spouse or partner name
-                <input name="spouse_name" value="{{ row['spouse_name'] or '' }}">
+            <label>Partner’s full name at birth
+                <input name="partner_birth_name" value="{{ row['partner_birth_name'] or '' }}">
+            </label>
+            <label>Partner’s current legal name
+                <input name="partner_current_legal_name" value="{{ row['partner_current_legal_name'] or row['spouse_name'] or '' }}">
+            </label>
+            <label>Partner’s SIN
+                <input name="partner_sin" value="{{ row['partner_sin'] or '' }}">
+            </label>
+            <label>Partner’s date of birth
+                <input type="date" name="partner_date_of_birth" value="{{ row['partner_date_of_birth'] or '' }}">
+            </label>
+            <label>Partner’s place of birth
+                <input name="partner_place_of_birth" value="{{ row['partner_place_of_birth'] or '' }}">
+            </label>
+            <label>Date of marriage
+                <input type="date" name="date_of_marriage" value="{{ row['date_of_marriage'] or '' }}">
+            </label>
+            <label>Previous spouse’s full name at birth
+                <input name="previous_partner_birth_name" value="{{ row['previous_partner_birth_name'] or '' }}">
+            </label>
+            <label>Previous spouse’s place of birth
+                <input name="previous_partner_place_of_birth" value="{{ row['previous_partner_place_of_birth'] or '' }}">
             </label>
             <label>Informant name
                 <input name="informant_name" value="{{ row['informant_name'] or '' }}">
@@ -119,8 +135,14 @@
             <label>Mother’s maiden name
                 <input name="mother_maiden_name" value="{{ row['mother_maiden_name'] or '' }}">
             </label>
+            <label>Was the deceased retired?
+                <input name="retired_status" value="{{ row['retired_status'] or '' }}">
+            </label>
             <label>Occupation
                 <input name="occupation" value="{{ row['occupation'] or '' }}">
+            </label>
+            <label>Industry
+                <input name="industry" value="{{ row['industry'] or '' }}">
             </label>
             <label>Usual residence
                 <input name="usual_residence" value="{{ row['usual_residence'] or '' }}">

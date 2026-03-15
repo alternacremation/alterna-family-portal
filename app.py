@@ -39,11 +39,31 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "pdf", "doc", "docx", "heic"
 PUBLIC_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 STATUS_OPTIONS = ["New", "In Review", "Ready", "Completed"]
 WIZARD_STEPS = [
-    "About your loved one",
-    "Vital statistics",
-    "Obituary",
-    "Photos",
-    "Authorization",
+    "Start here",
+    "About you",
+    "About the deceased",
+    "Obituary & files",
+    "Review",
+]
+
+HOSPITAL_OPTIONS = [
+    "Grace Hospital",
+    "Health Sciences Centre",
+    "Misericordia Health Centre",
+    "Riverview Health Centre",
+    "Seven Oaks Hospital",
+    "St. Boniface Hospital",
+    "Victoria Hospital",
+    "Other",
+]
+LOCATION_OPTIONS = [
+    "Hospital",
+    "Personal care home / nursing home",
+    "Residence",
+    "Other funeral home",
+    "Medical examiner / coroner",
+    "Unsure",
+    "Other",
 ]
 
 app = Flask(__name__)
@@ -114,6 +134,10 @@ def now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
+def generate_case_reference() -> str:
+    return f"ALT-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+
 def init_db() -> None:
     upload_folder = Path(app.config["UPLOAD_FOLDER"])
     upload_folder.mkdir(parents=True, exist_ok=True)
@@ -127,6 +151,13 @@ def init_db() -> None:
         family_email TEXT NOT NULL,
         family_phone TEXT NOT NULL,
         relationship_to_deceased TEXT,
+        intake_type TEXT,
+        preplanning_for TEXT,
+        will_status TEXT,
+        executor_is_contact TEXT,
+        executor_name TEXT,
+        executor_phone TEXT,
+        executor_email TEXT,
         portal_token TEXT,
         preferred_name TEXT,
         family_message TEXT,
@@ -143,8 +174,18 @@ def init_db() -> None:
         sin_last_four TEXT,
         marital_status TEXT,
         spouse_name TEXT,
+        partner_birth_name TEXT,
+        partner_current_legal_name TEXT,
+        partner_sin TEXT,
+        partner_date_of_birth TEXT,
+        partner_place_of_birth TEXT,
+        date_of_marriage TEXT,
+        previous_partner_birth_name TEXT,
+        previous_partner_place_of_birth TEXT,
         children_details TEXT,
         occupation TEXT,
+        industry TEXT,
+        retired_status TEXT,
         usual_residence TEXT,
         father_name TEXT,
         mother_name TEXT,
@@ -231,12 +272,29 @@ def init_db() -> None:
         columns = {row[1] for row in db.execute("PRAGMA table_info(submissions)").fetchall()}
         required_columns = {
             "updated_at": "ALTER TABLE submissions ADD COLUMN updated_at TEXT",
+            "intake_type": "ALTER TABLE submissions ADD COLUMN intake_type TEXT",
+            "preplanning_for": "ALTER TABLE submissions ADD COLUMN preplanning_for TEXT",
+            "will_status": "ALTER TABLE submissions ADD COLUMN will_status TEXT",
+            "executor_is_contact": "ALTER TABLE submissions ADD COLUMN executor_is_contact TEXT",
+            "executor_name": "ALTER TABLE submissions ADD COLUMN executor_name TEXT",
+            "executor_phone": "ALTER TABLE submissions ADD COLUMN executor_phone TEXT",
+            "executor_email": "ALTER TABLE submissions ADD COLUMN executor_email TEXT",
             "portal_token": "ALTER TABLE submissions ADD COLUMN portal_token TEXT",
             "preferred_name": "ALTER TABLE submissions ADD COLUMN preferred_name TEXT",
             "family_message": "ALTER TABLE submissions ADD COLUMN family_message TEXT",
             "birth_city": "ALTER TABLE submissions ADD COLUMN birth_city TEXT",
             "birth_region_country": "ALTER TABLE submissions ADD COLUMN birth_region_country TEXT",
             "citizenship": "ALTER TABLE submissions ADD COLUMN citizenship TEXT",
+            "industry": "ALTER TABLE submissions ADD COLUMN industry TEXT",
+            "retired_status": "ALTER TABLE submissions ADD COLUMN retired_status TEXT",
+            "partner_birth_name": "ALTER TABLE submissions ADD COLUMN partner_birth_name TEXT",
+            "partner_current_legal_name": "ALTER TABLE submissions ADD COLUMN partner_current_legal_name TEXT",
+            "partner_sin": "ALTER TABLE submissions ADD COLUMN partner_sin TEXT",
+            "partner_date_of_birth": "ALTER TABLE submissions ADD COLUMN partner_date_of_birth TEXT",
+            "partner_place_of_birth": "ALTER TABLE submissions ADD COLUMN partner_place_of_birth TEXT",
+            "date_of_marriage": "ALTER TABLE submissions ADD COLUMN date_of_marriage TEXT",
+            "previous_partner_birth_name": "ALTER TABLE submissions ADD COLUMN previous_partner_birth_name TEXT",
+            "previous_partner_place_of_birth": "ALTER TABLE submissions ADD COLUMN previous_partner_place_of_birth TEXT",
             "children_details": "ALTER TABLE submissions ADD COLUMN children_details TEXT",
             "mother_maiden_name": "ALTER TABLE submissions ADD COLUMN mother_maiden_name TEXT",
             "informant_email": "ALTER TABLE submissions ADD COLUMN informant_email TEXT",
@@ -299,6 +357,8 @@ def inject_globals() -> dict[str, Any]:
         "current_staff_role": session.get("staff_role", ""),
         "portal_base_url": app.config["PORTAL_BASE_URL"],
         "main_site_base_url": app.config["MAIN_SITE_BASE_URL"],
+        "hospital_options": HOSPITAL_OPTIONS,
+        "location_options": LOCATION_OPTIONS,
     }
 
 
@@ -455,6 +515,64 @@ def add_message(submission_id: int, sender_role: str, sender_name: str, message_
     audit("message_added", sender_role, sender_name, submission_id, {"preview": message_text[:120]})
 
 
+
+
+def compose_place_of_death(form: Any) -> str:
+    location_type = (form.get("location_type") or "").strip()
+    hospital_name = (form.get("hospital_name") or "").strip()
+    hospital_other = (form.get("hospital_other") or "").strip()
+    location_details = (form.get("location_details") or "").strip()
+
+    if location_type == "Hospital":
+        if hospital_name == "Other" and hospital_other:
+            return f"Hospital: {hospital_other}"
+        if hospital_name:
+            return hospital_name
+        return location_type
+
+    if location_type in {"Personal care home / nursing home", "Residence", "Other funeral home", "Other"}:
+        if location_details:
+            return f"{location_type}: {location_details}"
+        return location_type
+
+    return location_type
+
+
+def parse_place_of_death(raw_value: str) -> dict[str, str]:
+    raw_value = (raw_value or "").strip()
+    parsed = {"location_type": "", "hospital_name": "", "hospital_other": "", "location_details": ""}
+    if not raw_value:
+        return parsed
+
+    if raw_value in HOSPITAL_OPTIONS[:-1]:
+        parsed["location_type"] = "Hospital"
+        parsed["hospital_name"] = raw_value
+        return parsed
+
+    if raw_value.startswith("Hospital: "):
+        parsed["location_type"] = "Hospital"
+        parsed["hospital_name"] = "Other"
+        parsed["hospital_other"] = raw_value.split(": ", 1)[1]
+        return parsed
+
+    for prefix in ["Personal care home / nursing home", "Residence", "Other funeral home", "Other"]:
+        marker = f"{prefix}: "
+        if raw_value.startswith(marker):
+            parsed["location_type"] = prefix
+            parsed["location_details"] = raw_value.split(": ", 1)[1]
+            return parsed
+        if raw_value == prefix:
+            parsed["location_type"] = prefix
+            return parsed
+
+    if raw_value in {"Medical examiner / coroner", "Unsure"}:
+        parsed["location_type"] = raw_value
+        return parsed
+
+    parsed["location_type"] = "Other"
+    parsed["location_details"] = raw_value
+    return parsed
+
 def generate_obituary(form: dict[str, str]) -> str:
     first_name = form.get("preferred_name") or form.get("deceased_first_name") or "Your loved one"
     legal_name = " ".join(
@@ -464,7 +582,8 @@ def generate_obituary(form: dict[str, str]) -> str:
     place_of_death = form.get("place_of_death") or ""
     date_of_birth = form.get("date_of_birth") or ""
     occupation = form.get("occupation") or ""
-    spouse = form.get("spouse_name") or ""
+    industry = form.get("industry") or ""
+    spouse = form.get("partner_current_legal_name") or form.get("spouse_name") or ""
     children = form.get("children_details") or ""
     service_details = form.get("service_details") or ""
     charity = form.get("charity_requests") or ""
@@ -483,8 +602,12 @@ def generate_obituary(form: dict[str, str]) -> str:
     intro += "."
 
     details: list[str] = [intro]
-    if occupation:
+    if occupation and industry:
+        details.append(f"{first_name} was known for a life of hard work and dedication in {industry} as {occupation}.")
+    elif occupation:
         details.append(f"{first_name} was known for a life of hard work and dedication as {occupation}.")
+    elif industry:
+        details.append(f"{first_name} was known for a life of hard work and dedication in {industry}.")
     if spouse:
         details.append(f"{first_name} will be deeply missed by {spouse}.")
     if children:
@@ -509,12 +632,31 @@ def generate_obituary(form: dict[str, str]) -> str:
 
 
 def submission_dict_from_form(form: Any) -> dict[str, Any]:
+    family_name = form.get("family_name", "").strip()
+    relationship = form.get("relationship_to_deceased", "").strip()
+    marital_status = form.get("marital_status", "").strip()
+    reuse_contact_for_partner = form.get("reuse_contact_for_partner", "").strip()
+    partner_current_legal_name = form.get("partner_current_legal_name", "").strip()
+    if (
+        marital_status in {"Married", "Common law"}
+        and relationship in {"Spouse", "Common law partner"}
+        and reuse_contact_for_partner == "yes"
+        and family_name
+    ):
+        partner_current_legal_name = family_name
     return {
-        "case_reference": form.get("case_reference", "").strip(),
+        "case_reference": form.get("case_reference", "").strip() or generate_case_reference(),
+        "intake_type": form.get("intake_type", "").strip(),
+        "preplanning_for": form.get("preplanning_for", "").strip(),
         "family_name": form.get("family_name", "").strip(),
         "family_email": form.get("family_email", "").strip(),
         "family_phone": cleaned_phone(form.get("family_phone", "")),
         "relationship_to_deceased": form.get("relationship_to_deceased", "").strip(),
+        "will_status": form.get("will_status", "").strip(),
+        "executor_is_contact": form.get("executor_is_contact", "").strip(),
+        "executor_name": form.get("executor_name", "").strip(),
+        "executor_phone": cleaned_phone(form.get("executor_phone", "")),
+        "executor_email": form.get("executor_email", "").strip(),
         "preferred_name": form.get("preferred_name", "").strip(),
         "family_message": multiline_compact(form.get("family_message", "")),
         "deceased_first_name": form.get("deceased_first_name", "").strip(),
@@ -523,15 +665,26 @@ def submission_dict_from_form(form: Any) -> dict[str, Any]:
         "deceased_gender": form.get("deceased_gender", "").strip(),
         "date_of_birth": form.get("date_of_birth", "").strip(),
         "date_of_death": form.get("date_of_death", "").strip(),
-        "place_of_death": form.get("place_of_death", "").strip(),
+        "place_of_death": compose_place_of_death(form),
         "birth_city": form.get("birth_city", "").strip(),
         "birth_region_country": form.get("birth_region_country", "").strip(),
-        "citizenship": form.get("citizenship", "").strip(),
+        "citizenship": "",
         "sin_last_four": form.get("sin_last_four", "").strip(),
         "marital_status": form.get("marital_status", "").strip(),
         "spouse_name": form.get("spouse_name", "").strip(),
+        "partner_birth_name": form.get("partner_birth_name", "").strip(),
+        "partner_current_legal_name": partner_current_legal_name,
+        "partner_sin": form.get("partner_sin", "").strip(),
+        "partner_date_of_birth": form.get("partner_date_of_birth", "").strip(),
+        "partner_place_of_birth": form.get("partner_place_of_birth", "").strip(),
+        "date_of_marriage": form.get("date_of_marriage", "").strip(),
+        "reuse_contact_for_partner": form.get("reuse_contact_for_partner", "").strip(),
+        "previous_partner_birth_name": form.get("previous_partner_birth_name", "").strip(),
+        "previous_partner_place_of_birth": form.get("previous_partner_place_of_birth", "").strip(),
         "children_details": multiline_compact(form.get("children_details", "")),
+        "retired_status": form.get("retired_status", "").strip(),
         "occupation": form.get("occupation", "").strip(),
+        "industry": form.get("industry", "").strip(),
         "usual_residence": form.get("usual_residence", "").strip(),
         "father_name": form.get("father_name", "").strip(),
         "mother_name": form.get("mother_name", "").strip(),
@@ -599,17 +752,18 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             """
             INSERT INTO submissions (
                 created_at, updated_at, case_reference, family_name, family_email, family_phone,
-                relationship_to_deceased, portal_token, preferred_name, family_message,
+                relationship_to_deceased, intake_type, preplanning_for, will_status, executor_is_contact, executor_name, executor_phone, executor_email, portal_token, preferred_name, family_message,
                 deceased_first_name, deceased_middle_name, deceased_last_name, deceased_gender,
                 date_of_birth, date_of_death, place_of_death, birth_city, birth_region_country,
-                citizenship, sin_last_four, marital_status, spouse_name, children_details,
-                occupation, usual_residence, father_name, mother_name, mother_maiden_name,
+                citizenship, sin_last_four, marital_status, spouse_name, partner_birth_name, partner_current_legal_name,
+                partner_sin, partner_date_of_birth, partner_place_of_birth, date_of_marriage, previous_partner_birth_name,
+                previous_partner_place_of_birth, children_details, occupation, industry, retired_status, usual_residence, father_name, mother_name, mother_maiden_name,
                 informant_name, informant_email, informant_phone, informant_address,
                 disposition_type, obituary_style, obituary_headline, obituary_text, obituary_generated,
                 obituary_tone, service_details, charity_requests, photo_notes, photo_deadline,
                 signature_name, privacy_consent, memorial_published, memorial_slug,
                 status, progress_step, family_status_note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 now,
@@ -619,6 +773,13 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
                 form_data["family_email"],
                 form_data["family_phone"],
                 form_data["relationship_to_deceased"],
+                form_data["intake_type"],
+                form_data["preplanning_for"],
+                form_data["will_status"],
+                form_data["executor_is_contact"],
+                form_data["executor_name"],
+                form_data["executor_phone"],
+                form_data["executor_email"],
                 portal_token,
                 form_data["preferred_name"],
                 form_data["family_message"],
@@ -635,8 +796,18 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
                 form_data["sin_last_four"],
                 form_data["marital_status"],
                 form_data["spouse_name"],
+                form_data["partner_birth_name"],
+                form_data["partner_current_legal_name"],
+                form_data["partner_sin"],
+                form_data["partner_date_of_birth"],
+                form_data["partner_place_of_birth"],
+                form_data["date_of_marriage"],
+                form_data["previous_partner_birth_name"],
+                form_data["previous_partner_place_of_birth"],
                 form_data["children_details"],
                 form_data["occupation"],
+                form_data["industry"],
+                form_data["retired_status"],
                 form_data["usual_residence"],
                 form_data["father_name"],
                 form_data["mother_name"],
@@ -684,10 +855,11 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
         """
         UPDATE submissions SET
             updated_at = ?, case_reference = ?, family_name = ?, family_email = ?, family_phone = ?,
-            relationship_to_deceased = ?, preferred_name = ?, family_message = ?, deceased_first_name = ?,
+            relationship_to_deceased = ?, intake_type = ?, preplanning_for = ?, will_status = ?, executor_is_contact = ?, executor_name = ?, executor_phone = ?, executor_email = ?, preferred_name = ?, family_message = ?, deceased_first_name = ?,
             deceased_middle_name = ?, deceased_last_name = ?, deceased_gender = ?, date_of_birth = ?,
             date_of_death = ?, place_of_death = ?, birth_city = ?, birth_region_country = ?, citizenship = ?,
-            sin_last_four = ?, marital_status = ?, spouse_name = ?, children_details = ?, occupation = ?,
+            sin_last_four = ?, marital_status = ?, spouse_name = ?, partner_birth_name = ?, partner_current_legal_name = ?,
+            partner_sin = ?, partner_date_of_birth = ?, partner_place_of_birth = ?, date_of_marriage = ?, previous_partner_birth_name = ?, previous_partner_place_of_birth = ?, children_details = ?, occupation = ?, industry = ?, retired_status = ?,
             usual_residence = ?, father_name = ?, mother_name = ?, mother_maiden_name = ?,
             informant_name = ?, informant_email = ?, informant_phone = ?, informant_address = ?,
             disposition_type = ?, obituary_style = ?, obituary_headline = ?, obituary_text = ?,
@@ -702,6 +874,13 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             form_data["family_email"],
             form_data["family_phone"],
             form_data["relationship_to_deceased"],
+            form_data["intake_type"],
+            form_data["preplanning_for"],
+            form_data["will_status"],
+            form_data["executor_is_contact"],
+            form_data["executor_name"],
+            form_data["executor_phone"],
+            form_data["executor_email"],
             form_data["preferred_name"],
             form_data["family_message"],
             form_data["deceased_first_name"],
@@ -717,8 +896,18 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             form_data["sin_last_four"],
             form_data["marital_status"],
             form_data["spouse_name"],
+            form_data["partner_birth_name"],
+            form_data["partner_current_legal_name"],
+            form_data["partner_sin"],
+            form_data["partner_date_of_birth"],
+            form_data["partner_place_of_birth"],
+            form_data["date_of_marriage"],
+            form_data["previous_partner_birth_name"],
+            form_data["previous_partner_place_of_birth"],
             form_data["children_details"],
             form_data["occupation"],
+            form_data["industry"],
+            form_data["retired_status"],
             form_data["usual_residence"],
             form_data["father_name"],
             form_data["mother_name"],
@@ -748,17 +937,7 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
 
 
 def validate_submission(form_data: dict[str, Any]) -> list[str]:
-    required = {
-        "case reference": form_data["case_reference"],
-        "family name": form_data["family_name"],
-        "family email": form_data["family_email"],
-        "family phone": form_data["family_phone"],
-        "deceased first name": form_data["deceased_first_name"],
-        "deceased last name": form_data["deceased_last_name"],
-        "informant name": form_data["informant_name"],
-        "signature name": form_data["signature_name"],
-    }
-    return [label.title() for label, value in required.items() if not value]
+    return []
 
 
 def authenticate_staff(username: str, password: str) -> sqlite3.Row | None:
@@ -801,17 +980,19 @@ def submit() -> Response | str:
         if missing:
             flash(f"Please complete the required fields: {', '.join(missing)}.", "error")
             return render_template("submit.html", form_data=request.form)
-        if not form_data["privacy_consent"]:
-            flash("Please confirm consent before submitting.", "error")
-            return render_template("submit.html", form_data=request.form)
+        try:
+            submission_id = upsert_submission(form_data)
+            save_uploaded_files(request.files.getlist("memorial_files"), submission_id)
+            submission = fetch_submission(submission_id)
+            flash("Thank you. Your information has been received.", "success")
+            return redirect(url_for("thank_you", token=submission["portal_token"]))
+        except Exception:
+            app.logger.exception("Family intake submission failed")
+            flash("Something went wrong while saving this test submission. Please try again.", "error")
+            return render_template("submit.html", form_data=request.form), 200
 
-        submission_id = upsert_submission(form_data)
-        save_uploaded_files(request.files.getlist("memorial_files"), submission_id)
-        submission = fetch_submission(submission_id)
-        flash("Thank you. Your Alterna family portal has been created.", "success")
-        return redirect(url_for("thank_you", token=submission["portal_token"]))
-
-    return render_template("submit.html", form_data={})
+    initial_form = parse_place_of_death("")
+    return render_template("submit.html", form_data=initial_form)
 
 
 @app.route("/thank-you")
@@ -835,12 +1016,14 @@ def family_portal(token: str) -> Response | str:
             missing = validate_submission(form_data)
             if missing:
                 flash(f"Please complete the required fields: {', '.join(missing)}.", "error")
-            elif not form_data["privacy_consent"]:
-                flash("Please confirm consent before saving.", "error")
             else:
-                upsert_submission(form_data, row)
-                save_uploaded_files(request.files.getlist("memorial_files"), int(row["id"]))
-                flash("Your information has been saved.", "success")
+                try:
+                    upsert_submission(form_data, row)
+                    save_uploaded_files(request.files.getlist("memorial_files"), int(row["id"]))
+                    flash("Your information has been saved.", "success")
+                except Exception:
+                    app.logger.exception("Family portal save failed")
+                    flash("Something went wrong while saving this test submission. Please try again.", "error")
         elif action == "message":
             message = request.form.get("message_text", "").strip()
             sender_name = request.form.get("sender_name", row["family_name"]).strip() or row["family_name"]
@@ -1108,9 +1291,12 @@ def submission_summary_pdf(submission_id: int) -> Response:
             f"Place of death: {row['place_of_death'] or ''}",
             f"Birth city: {row['birth_city'] or ''}",
             f"Birth province/country: {row['birth_region_country'] or ''}",
-            f"Citizenship: {row['citizenship'] or ''}",
             f"Marital status: {row['marital_status'] or ''}",
-            f"Spouse: {row['spouse_name'] or ''}",
+            f"Partner current legal name: {row['partner_current_legal_name'] or row['spouse_name'] or ''}",
+            f"Partner full name at birth: {row['partner_birth_name'] or ''}",
+            f"Date of marriage: {row['date_of_marriage'] or ''}",
+            f"Previous spouse full name at birth: {row['previous_partner_birth_name'] or ''}",
+            f"Previous spouse place of birth: {row['previous_partner_place_of_birth'] or ''}",
             f"Children: {row['children_details'] or ''}",
             f"Father: {row['father_name'] or ''}",
             f"Mother: {row['mother_name'] or ''}",
