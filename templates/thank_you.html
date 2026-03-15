@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Thank you{% endblock %}
+{% block content %}
+<section class="card center narrow">
+    <p class="eyebrow">Thank you</p>
+    <h1>Your information has been received.</h1>
+    <p>We will review everything shortly. You can return to your private family portal at any time using the link below.</p>
+    {% if row %}
+    <div class="card inner-card top-gap accent-card left-align">
+        <p><strong>Family portal link</strong></p>
+        <p><a href="{{ url_for('family_portal', token=row['portal_token']) }}">{{ url_for('family_portal', token=row['portal_token']) }}</a></p>
+        <p class="mini">This is the private page for {{ row['deceased_first_name'] }} {{ row['deceased_last_name'] }}.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

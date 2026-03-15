@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Office dashboard{% endblock %}
+{% block content %}
+<section class="stats-grid">
+    <article class="card stat-card"><div class="eyebrow">Total</div><strong>{{ submission_count }}</strong><span>Submissions</span></article>
+    <article class="card stat-card"><div class="eyebrow">New</div><strong>{{ status_counts['New'] }}</strong><span>Waiting for review</span></article>
+    <article class="card stat-card"><div class="eyebrow">In Review</div><strong>{{ status_counts['In Review'] }}</strong><span>Actively being worked</span></article>
+    <article class="card stat-card"><div class="eyebrow">Ready</div><strong>{{ status_counts['Ready'] }}</strong><span>Ready to publish</span></article>
+</section>
+
+<section class="card">
+    <div class="dashboard-header">
+        <div>
+            <p class="eyebrow">Alterna office dashboard</p>
+            <h1>Family portal submissions</h1>
+        </div>
+        <div class="actions tight">
+            <a class="button secondary" href="{{ url_for('export_csv') }}">Export all CSV</a>
+            <a class="button secondary" href="{{ url_for('export_vital_csv') }}">Export vital statistics</a>
+            <a class="button secondary" href="{{ url_for('integration_outbox_json') }}">Outbox JSON</a>
+        </div>
+    </div>
+
+    <form class="toolbar" method="get">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search case, family, or deceased">
+        <select name="status">
+            <option value="All" {% if active_status == 'All' %}selected{% endif %}>All statuses</option>
+            {% for status in status_options %}
+            <option value="{{ status }}" {% if active_status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+        <button class="button secondary" type="submit">Filter</button>
+    </form>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Case</th>
+                    <th>Deceased</th>
+                    <th>Family</th>
+                    <th>Status</th>
+                    <th>Portal</th>
+                    <th>Memorial</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('submission_detail', submission_id=row['id']) }}"><strong>{{ row['case_reference'] }}</strong></a>
+                        <div class="mini">Updated {{ row['updated_at'] or row['created_at'] }}</div>
+                    </td>
+                    <td>{{ row['deceased_first_name'] }} {{ row['deceased_last_name'] }}</td>
+                    <td>{{ row['family_name'] }}<div class="mini">{{ row['family_email'] }}</div></td>
+                    <td>
+                        <span class="status status-{{ row['status'].lower().replace(' ', '-') }}">{{ row['status'] }}</span>
+                        <div class="mini">{{ row['progress_step'] }}</div>
+                    </td>
+                    <td><a href="{{ url_for('family_portal', token=row['portal_token']) }}">Open portal</a></td>
+                    <td>
+                        {% if row['memorial_published'] %}
+                        <a href="{{ url_for('memorial_page', slug=row['memorial_slug']) }}">Live memorial</a>
+                        {% else %}
+                        <span class="mini">Not published</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="muted">No matching submissions yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="grid three lower-gap">
+    <article class="card mini-card">
+        <p class="eyebrow">Staff accounts</p>
+        <h3>Active users</h3>
+        <ul class="feature-list compact-list">
+            {% for user in users %}
+            <li>{{ user['display_name'] }} ({{ user['username'] }}){% if user['last_login_at'] %}<div class="mini">Last login {{ user['last_login_at'] }}</div>{% endif %}</li>
+            {% else %}
+            <li>No users yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="card mini-card">
+        <p class="eyebrow">Integration outbox</p>
+        <h3>Recent queued events</h3>
+        <ul class="feature-list compact-list">
+            {% for item in outbox %}
+            <li>{{ item['event_type'] }}<div class="mini">{{ item['status'] }}{% if item['target'] %} to {{ item['target'] }}{% endif %}</div></li>
+            {% else %}
+            <li>No outbox events yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="card mini-card">
+        <p class="eyebrow">Audit log</p>
+        <h3>Recent activity</h3>
+        <ul class="feature-list compact-list">
+            {% for item in audit_rows %}
+            <li>{{ item['action'] }}<div class="mini">{{ item['actor_name'] }} at {{ item['created_at'] }}</div></li>
+            {% else %}
+            <li>No audit events yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Case detail{% endblock %}
+{% block content %}
+<section class="card">
+    <div class="dashboard-header">
+        <div>
+            <p class="eyebrow">Case detail</p>
+            <h1>{{ row['deceased_first_name'] }} {{ row['deceased_last_name'] }}</h1>
+            <p class="mini">Case {{ row['case_reference'] }}</p>
+        </div>
+        <div class="actions tight">
+            <a class="button secondary" href="{{ url_for('family_portal', token=row['portal_token']) }}">Open family portal</a>
+            <a class="button secondary" href="{{ url_for('submission_summary_pdf', submission_id=row['id']) }}">Download summary PDF</a>
+            {% if row['memorial_published'] %}
+            <a class="button secondary" href="{{ url_for('memorial_json', slug=row['memorial_slug']) }}">Memorial JSON</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div>
+            <h2>Status</h2>
+            <form method="post" action="{{ url_for('update_submission', submission_id=row['id']) }}" class="grid one">
+                <label>Status
+                    <select name="status">
+                        {% for status in status_options %}
+                        <option value="{{ status }}" {% if row['status'] == status %}selected{% endif %}>{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Progress step
+                    <input name="progress_step" value="{{ row['progress_step'] }}">
+                </label>
+                <label>Family status note
+                    <textarea name="family_status_note" rows="3">{{ row['family_status_note'] or '' }}</textarea>
+                </label>
+                <label>Internal staff notes
+                    <textarea name="staff_notes" rows="5">{{ row['staff_notes'] or '' }}</textarea>
+                </label>
+                <button class="button" type="submit">Save updates</button>
+            </form>
+
+            <h2 class="top-gap">Memorial publishing</h2>
+            <form method="post" action="{{ url_for('publish_submission', submission_id=row['id']) }}" class="actions tight">
+                {% if row['memorial_published'] %}
+                    <button class="button secondary" type="submit" name="publish" value="0">Unpublish memorial</button>
+                    <a class="button" href="{{ url_for('memorial_page', slug=row['memorial_slug']) }}">View memorial</a>
+                {% else %}
+                    <button class="button" type="submit" name="publish" value="1">Approve and publish</button>
+                {% endif %}
+            </form>
+        </div>
+
+        <div>
+            <h2>At a glance</h2>
+            <dl>
+                <dt>Family contact</dt><dd>{{ row['family_name'] }}<br>{{ row['family_email'] }}<br>{{ row['family_phone'] }}</dd>
+                <dt>Informant</dt><dd>{{ row['informant_name'] }}{% if row['informant_email'] %}<br>{{ row['informant_email'] }}{% endif %}{% if row['informant_phone'] %}<br>{{ row['informant_phone'] }}{% endif %}</dd>
+                <dt>Portal link</dt><dd><a href="{{ url_for('family_portal', token=row['portal_token']) }}">{{ portal_base_url }}/family/{{ row['portal_token'] }}</a></dd>
+                <dt>Public memorial</dt><dd>{% if row['memorial_published'] %}<a href="{{ url_for('memorial_page', slug=row['memorial_slug']) }}">{{ main_site_base_url }}/obituaries/{{ row['memorial_slug'] }}</a>{% else %}Not published{% endif %}</dd>
+                <dt>Vital stats</dt><dd>{{ row['date_of_birth'] or 'Not entered' }} to {{ row['date_of_death'] or 'Not entered' }}<br>{{ row['birth_city'] or '' }} {{ row['birth_region_country'] or '' }}</dd>
+                <dt>Parents</dt><dd>{{ row['father_name'] or 'Not entered' }}<br>{{ row['mother_name'] or 'Not entered' }}</dd>
+            </dl>
+        </div>
+    </div>
+</section>
+
+<section class="grid two lower-gap">
+    <article class="card">
+        <h2>Obituary draft</h2>
+        <p class="mini">Style: {{ row['obituary_style'] or 'Not selected' }}{% if row['obituary_tone'] %} | Tone: {{ row['obituary_tone'] }}{% endif %}</p>
+        <div class="prewrap prose-box">{{ row['obituary_text'] or row['obituary_generated'] or 'No obituary draft provided yet.' }}</div>
+    </article>
+    <article class="card">
+        <h2>Uploads</h2>
+        <ul class="upload-list">
+            {% for upload in uploads %}
+            <li>
+                <span><a href="{{ url_for('uploaded_file', filename=upload['stored_filename']) }}">{{ upload['original_filename'] }}</a></span>
+                <span class="mini">Received {{ upload['uploaded_at'] }}</span>
+            </li>
+            {% else %}
+            <li><span>No files uploaded yet.</span></li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+
+<section class="grid two lower-gap">
+    <article class="card">
+        <h2>Family story and notes</h2>
+        <div class="prewrap prose-box">{{ row['family_message'] or 'No extra family notes yet.' }}</div>
+        {% if row['service_details'] %}
+        <h3 class="top-gap">Service details</h3>
+        <div class="prewrap">{{ row['service_details'] }}</div>
+        {% endif %}
+        {% if row['charity_requests'] %}
+        <h3 class="top-gap">Donation requests</h3>
+        <div class="prewrap">{{ row['charity_requests'] }}</div>
+        {% endif %}
+    </article>
+    <article class="card">
+        <h2>Message thread</h2>
+        <div class="message-thread">
+            {% for message in messages %}
+            <div class="message-bubble {{ message['sender_role'] }}">
+                <strong>{{ message['sender_name'] }}</strong>
+                <div class="mini">{{ message['created_at'] }}</div>
+                <p class="prewrap">{{ message['message_text'] }}</p>
+            </div>
+            {% else %}
+            <p class="muted">No messages yet.</p>
+            {% endfor %}
+        </div>
+        <form method="post" action="{{ url_for('admin_message', submission_id=row['id']) }}" class="grid one top-gap">
+            <label>Reply to family
+                <textarea name="message_text" rows="4"></textarea>
+            </label>
+            <button class="button" type="submit">Send message</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

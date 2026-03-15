@@ -1,0 +1,23 @@
+version: '3.9'
+services:
+  portal:
+    build: .
+    container_name: alterna-family-portal-staging
+    env_file:
+      - .env.staging
+    ports:
+      - "8000:8000"
+    volumes:
+      - portal_uploads:/app/uploads
+      - portal_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  portal_uploads:
+  portal_data:

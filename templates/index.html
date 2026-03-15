@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Alterna Family Portal{% endblock %}
+{% block content %}
+<section class="hero card">
+    <div>
+        <p class="eyebrow">Alterna Family Connect</p>
+        <h1>A calm, modern way for families to complete arrangements online.</h1>
+        <p class="lead">Collect vital statistics, draft the obituary, upload photos, sign authorization, and keep everything in one secure place. This build is now a production-ready starter with staff accounts, audit logging, integration outbox events, public memorial JSON, and deployment files for a real rollout.</p>
+        <div class="actions">
+            <a class="button" href="{{ url_for('submit') }}">Start family intake</a>
+            <a class="button secondary" href="{{ url_for('admin_login') }}">Open staff dashboard</a>
+        </div>
+    </div>
+    <aside class="summary-panel">
+        <h2>What this build now includes</h2>
+        <ul class="feature-list">
+            <li>Family wizard with five guided steps</li>
+            <li>Private family portal and messaging thread</li>
+            <li>Staff user accounts and audit log</li>
+            <li>Integration outbox for website and email workflows</li>
+            <li>Memorial publish API and public memorial JSON feed</li>
+            <li>Docker, Gunicorn, and environment configuration starter files</li>
+        </ul>
+    </aside>
+</section>
+
+<section class="grid three lower-gap">
+    <article class="card mini-card">
+        <p class="eyebrow">Families</p>
+        <h3>Under 15 minutes</h3>
+        <p>Large buttons, clear language, progress tracking, and saveable information, all designed for mobile-first use.</p>
+    </article>
+    <article class="card mini-card">
+        <p class="eyebrow">Office</p>
+        <h3>Everything in one place</h3>
+        <p>Review vital stats, obituary drafts, uploaded files, notes, portal links, and family messages without email chaos.</p>
+    </article>
+    <article class="card mini-card">
+        <p class="eyebrow">Integration</p>
+        <h3>Ready for real rollout</h3>
+        <p>Outbox events and JSON feeds make it much easier to connect this portal to your website, notification flow, and future staff automation.</p>
+    </article>
+</section>
+{% endblock %}

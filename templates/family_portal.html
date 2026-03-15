@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block title %}Family portal{% endblock %}
+{% block content %}
+<section class="card">
+    <div class="dashboard-header">
+        <div>
+            <p class="eyebrow">Alterna family portal</p>
+            <h1>{{ row['deceased_first_name'] }} {{ row['deceased_last_name'] }}</h1>
+            <p>{{ row['family_status_note'] or 'We have received your information and will review everything shortly.' }}</p>
+        </div>
+        <div class="summary-chip-group">
+            <span class="summary-chip">{{ row['status'] }}</span>
+            <span class="summary-chip">{{ row['progress_step'] }}</span>
+        </div>
+    </div>
+
+    <div class="grid two lower-gap">
+        <article class="card inner-card accent-card">
+            <h2>Progress</h2>
+            <ul class="check-list">
+                <li class="{{ 'done' if row['informant_name'] else '' }}">Vital statistics</li>
+                <li class="{{ 'done' if row['obituary_text'] or row['obituary_generated'] else '' }}">Obituary</li>
+                <li class="{{ 'done' if uploads else '' }}">Photos and documents</li>
+                <li class="{{ 'done' if row['signature_name'] and row['privacy_consent'] else '' }}">Authorization</li>
+            </ul>
+        </article>
+        <article class="card inner-card accent-card">
+            <h2>Your private links</h2>
+            <p><strong>Portal</strong><br><a href="{{ url_for('family_portal', token=row['portal_token']) }}">{{ url_for('family_portal', token=row['portal_token']) }}</a></p>
+            {% if row['memorial_published'] %}
+            <p><strong>Memorial page</strong><br><a href="{{ url_for('memorial_page', slug=row['memorial_slug']) }}">{{ url_for('memorial_page', slug=row['memorial_slug']) }}</a></p>
+            {% else %}
+            <p class="mini">Your memorial page is not live yet. Alterna will publish it once approved.</p>
+            {% endif %}
+        </article>
+    </div>
+</section>
+
+<section class="card lower-gap">
+    <div class="section-title">
+        <p class="eyebrow">Update information</p>
+        <h2>Edit or complete the arrangement details</h2>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <input type="hidden" name="action" value="save_form">
+        <div class="grid two">
+            <label>Case reference
+                <input name="case_reference" value="{{ row['case_reference'] }}">
+            </label>
+            <label>Relationship to the deceased
+                <input name="relationship_to_deceased" value="{{ row['relationship_to_deceased'] or '' }}">
+            </label>
+            <label>Family contact name
+                <input name="family_name" value="{{ row['family_name'] }}">
+            </label>
+            <label>Family email
+                <input type="email" name="family_email" value="{{ row['family_email'] }}">
+            </label>
+            <label>Family phone
+                <input name="family_phone" value="{{ row['family_phone'] }}">
+            </label>
+            <label>Preferred name
+                <input name="preferred_name" value="{{ row['preferred_name'] or '' }}">
+            </label>
+            <label>Legal first name
+                <input name="deceased_first_name" value="{{ row['deceased_first_name'] }}">
+            </label>
+            <label>Middle name
+                <input name="deceased_middle_name" value="{{ row['deceased_middle_name'] or '' }}">
+            </label>
+            <label>Last name
+                <input name="deceased_last_name" value="{{ row['deceased_last_name'] }}">
+            </label>
+            <label>Date of birth
+                <input type="date" name="date_of_birth" value="{{ row['date_of_birth'] or '' }}">
+            </label>
+            <label>Date of death
+                <input type="date" name="date_of_death" value="{{ row['date_of_death'] or '' }}">
+            </label>
+            <label>Place of death
+                <input name="place_of_death" value="{{ row['place_of_death'] or '' }}">
+            </label>
+            <label>Birth city
+                <input name="birth_city" value="{{ row['birth_city'] or '' }}">
+            </label>
+            <label>Birth province, state, or country
+                <input name="birth_region_country" value="{{ row['birth_region_country'] or '' }}">
+            </label>
+            <label>Citizenship
+                <input name="citizenship" value="{{ row['citizenship'] or '' }}">
+            </label>
+            <label>Marital status
+                <input name="marital_status" value="{{ row['marital_status'] or '' }}">
+            </label>
+            <label>Spouse or partner name
+                <input name="spouse_name" value="{{ row['spouse_name'] or '' }}">
+            </label>
+            <label>Informant name
+                <input name="informant_name" value="{{ row['informant_name'] or '' }}">
+            </label>
+            <label>Informant email
+                <input name="informant_email" value="{{ row['informant_email'] or '' }}">
+            </label>
+            <label>Informant phone
+                <input name="informant_phone" value="{{ row['informant_phone'] or '' }}">
+            </label>
+            <label class="full">Informant address
+                <textarea name="informant_address" rows="3">{{ row['informant_address'] or '' }}</textarea>
+            </label>
+            <label class="full">Children
+                <textarea name="children_details" rows="3">{{ row['children_details'] or '' }}</textarea>
+            </label>
+            <label>Father’s full name
+                <input name="father_name" value="{{ row['father_name'] or '' }}">
+            </label>
+            <label>Mother’s full name
+                <input name="mother_name" value="{{ row['mother_name'] or '' }}">
+            </label>
+            <label>Mother’s maiden name
+                <input name="mother_maiden_name" value="{{ row['mother_maiden_name'] or '' }}">
+            </label>
+            <label>Occupation
+                <input name="occupation" value="{{ row['occupation'] or '' }}">
+            </label>
+            <label>Usual residence
+                <input name="usual_residence" value="{{ row['usual_residence'] or '' }}">
+            </label>
+            <label>Last 4 digits of SIN (optional)
+                <input name="sin_last_four" value="{{ row['sin_last_four'] or '' }}">
+            </label>
+            <label>Disposition type
+                <input name="disposition_type" value="{{ row['disposition_type'] or '' }}">
+            </label>
+            <label>Obituary style
+                <input name="obituary_style" value="{{ row['obituary_style'] or '' }}">
+            </label>
+            <label>Obituary tone
+                <input name="obituary_tone" value="{{ row['obituary_tone'] or '' }}">
+            </label>
+            <label class="full">Stories, personality, or details to include
+                <textarea name="family_message" rows="4">{{ row['family_message'] or '' }}</textarea>
+            </label>
+            <label class="full">Service details
+                <textarea name="service_details" rows="3">{{ row['service_details'] or '' }}</textarea>
+            </label>
+            <label class="full">Donation or charity requests
+                <textarea name="charity_requests" rows="3">{{ row['charity_requests'] or '' }}</textarea>
+            </label>
+            <label class="full">Obituary draft
+                <textarea name="obituary_text" rows="8">{{ row['obituary_text'] or '' }}</textarea>
+            </label>
+            <label class="full">Upload more files
+                <input type="file" name="memorial_files" multiple>
+            </label>
+            <label class="full">Photo notes or captions
+                <textarea name="photo_notes" rows="3">{{ row['photo_notes'] or '' }}</textarea>
+            </label>
+            <label>Preferred photo deadline
+                <input type="date" name="photo_deadline" value="{{ row['photo_deadline'] or '' }}">
+            </label>
+            <label>Type your name as your signature
+                <input name="signature_name" value="{{ row['signature_name'] or '' }}">
+            </label>
+            <label class="checkbox-row full">
+                <input type="checkbox" name="privacy_consent" {% if row['privacy_consent'] %}checked{% endif %}>
+                <span>I confirm the information above is accurate to the best of my knowledge and I authorize Alterna to use it for arrangements and registration.</span>
+            </label>
+        </div>
+        <button class="button" type="submit">Save changes</button>
+    </form>
+</section>
+
+<section class="grid two lower-gap">
+    <article class="card">
+        <h2>Uploaded files</h2>
+        <ul class="upload-list">
+            {% for upload in uploads %}
+            <li>
+                <span>{{ upload['original_filename'] }}</span>
+                <span class="mini">Received {{ upload['uploaded_at'] }}</span>
+            </li>
+            {% else %}
+            <li><span>No files uploaded yet.</span></li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="card">
+        <h2>Message Alterna</h2>
+        <div class="message-thread">
+            {% for message in messages %}
+            <div class="message-bubble {{ message['sender_role'] }}">
+                <strong>{{ message['sender_name'] }}</strong>
+                <div class="mini">{{ message['created_at'] }}</div>
+                <p class="prewrap">{{ message['message_text'] }}</p>
+            </div>
+            {% else %}
+            <p class="muted">No messages yet.</p>
+            {% endfor %}
+        </div>
+        <form method="post" class="grid one top-gap">
+            <input type="hidden" name="action" value="message">
+            <label>Your name
+                <input name="sender_name" value="{{ row['family_name'] }}">
+            </label>
+            <label>Message
+                <textarea name="message_text" rows="4"></textarea>
+            </label>
+            <button class="button" type="submit">Send message</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

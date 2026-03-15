@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Alterna Family Portal{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<header class="site-header">
+    <div class="container topbar">
+        <a href="{{ url_for('index') }}" class="brand-mark">
+            <span class="brand-badge">Alterna</span>
+            <span>
+                <strong>Family Portal</strong>
+                <small>Simple cremation, thoughtfully handled</small>
+            </span>
+        </a>
+        <nav>
+            <a href="{{ url_for('submit') }}">Start family intake</a>
+            {% if admin_logged_in %}
+                <a href="{{ url_for('admin') }}">Office dashboard</a>
+                <span class="mini nav-user">{{ current_staff_name }}{% if current_staff_role %}, {{ current_staff_role }}{% endif %}</span>
+                <a href="{{ url_for('admin_logout') }}">Sign out</a>
+            {% else %}
+                <a href="{{ url_for('admin_login') }}">Staff sign in</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+<main class="container content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

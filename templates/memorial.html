@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Memorial page{% endblock %}
+{% block content %}
+<section class="card memorial-hero">
+    <p class="eyebrow">In memory</p>
+    <h1>{{ row['deceased_first_name'] }} {{ row['deceased_last_name'] }}</h1>
+    {% if row['date_of_birth'] or row['date_of_death'] %}
+    <p class="lead">{{ row['date_of_birth'] or ' ' }}{% if row['date_of_birth'] and row['date_of_death'] %} to {% endif %}{{ row['date_of_death'] or ' ' }}</p>
+    {% endif %}
+    {% if row['obituary_headline'] %}<p class="lead">{{ row['obituary_headline'] }}</p>{% endif %}
+</section>
+
+<section class="grid two lower-gap">
+    <article class="card">
+        <h2>Obituary</h2>
+        <div class="prewrap prose-box">{{ row['obituary_text'] or row['obituary_generated'] or 'A full obituary has not been posted.' }}</div>
+    </article>
+    <article class="card">
+        <h2>Service information</h2>
+        <p class="prewrap">{{ row['service_details'] or 'Please contact Alterna Cremation for service details.' }}</p>
+        {% if row['charity_requests'] %}
+        <h3>Donations</h3>
+        <p class="prewrap">{{ row['charity_requests'] }}</p>
+        {% endif %}
+    </article>
+</section>
+
+<section class="card">
+    <h2>Photos</h2>
+    <div class="photo-grid">
+        {% for upload in uploads %}
+        {% if upload['original_filename'].lower().endswith(('.jpg', '.jpeg', '.png', '.webp')) %}
+        <img src="{{ url_for('memorial_asset', slug=row['memorial_slug'], upload_id=upload['id']) }}" alt="{{ upload['original_filename'] }}">
+        {% endif %}
+        {% else %}
+        <p class="muted">No photos shared yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
