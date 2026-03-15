@@ -4,21 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Alterna Family Portal{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon-flower.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon-flower.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 <header class="site-header">
-    <div class="container topbar compact-topbar">
-        <a href="{{ url_for('index') }}" class="brand-mark compact-brand-mark">
-            <img src="{{ url_for('static', filename='favicon-flower.png') }}" alt="Alterna flower icon" class="brand-icon compact-brand-icon">
-            <span class="brand-copy compact-brand-copy">
-                <strong>Alterna Family Portal</strong>
+    <div class="container topbar">
+        <a href="{{ url_for('index') }}" class="brand-mark">
+            <span class="brand-badge">Alterna</span>
+            <span>
+                <strong>Family Portal</strong>
                 <small>Simple cremation, thoughtfully handled</small>
             </span>
         </a>
-        <nav class="site-nav compact-site-nav">
+        <nav>
             <a href="{{ url_for('submit') }}">Start family intake</a>
             {% if admin_logged_in %}
                 <a href="{{ url_for('admin') }}">Office dashboard</a>

@@ -63,38 +63,32 @@ def create_submission(client, **extra):
 def test_home_page_loads(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Alterna Cremation Family Portal" in response.data
-    assert b"All required fields are turned off" in response.data
+    assert b"Alterna Family Connect" in response.data
+    assert b"production-ready starter" in response.data
 
 
-def test_submit_accepts_blank_testing_submission(client):
-    response = client.post("/submit", data={}, follow_redirects=False)
-    assert response.status_code == 302
-    assert "/thank-you?token=" in response.headers["Location"]
+def test_submit_requires_core_fields(client):
+    response = client.post("/submit", data={}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Please complete the required fields" in response.data
 
 
-def test_submit_page_has_new_intake_language(client):
-    response = client.get("/submit")
-    assert b"Yes, a death has occurred" in response.data
-    assert b"No, a death has not occurred, I am pre-planning" in response.data
-    assert b"Are you pre-planning for yourself or someone else?" in response.data
-    assert b"Did the deceased leave a will?" in response.data
-    assert b"Same person as above" in response.data
-    assert b"Sex" in response.data
-
-
-def test_submit_accepts_without_consent(client):
+def test_submit_requires_consent(client):
     response = client.post(
         "/submit",
         data={
+            "case_reference": "ALT-1001",
+            "family_name": "Ashley Newton",
             "family_email": "ashley@example.com",
+            "family_phone": "204-555-1212",
             "deceased_first_name": "John",
             "deceased_last_name": "Smith",
+            "informant_name": "Ashley Newton",
+            "signature_name": "Ashley Newton",
         },
-        follow_redirects=False,
+        follow_redirects=True,
     )
-    assert response.status_code == 302
-    assert "/thank-you?token=" in response.headers["Location"]
+    assert b"Please confirm consent before submitting." in response.data
 
 
 def test_admin_requires_login(client):
@@ -316,43 +310,3 @@ def test_staging_and_integration_docs_exist(client):
     assert (root / "DEPLOY_STAGING.md").exists()
     assert (root / "WEBSITE_INTEGRATION_MAP.md").exists()
     assert (root / "scripts" / "sample_memorial_import.py").exists()
-
-
-def test_website_importer_stub_files_exist(client):
-    root = PROJECT_ROOT
-    assert (root / "scripts" / "website_importer_stub.py").exists()
-    assert (root / "WEBSITE_IMPORTER_STUB.md").exists()
-
-
-def test_website_importer_stub_render_and_bundle(tmp_path):
-    from scripts.website_importer_stub import build_listing_record, render_memorial_html, write_import_bundle
-
-    payload = {
-        "memorial_slug": "jane-smith-a1b2c3",
-        "name": "Jane Smith",
-        "preferred_name": "Jane",
-        "date_of_birth": "1942-05-01",
-        "date_of_death": "2026-03-10",
-        "headline": "In loving memory",
-        "obituary": "Jane lived well and was deeply loved.\n\nShe adored her family.",
-        "service_details": "Private family gathering.",
-        "charity_requests": "CancerCare Manitoba",
-        "photos": [{"filename": "jane.jpg", "site_cached_url": "assets/photo-1.jpg"}],
-        "published": True,
-        "canonical_site_url": "https://www.alternacremation.ca/obituaries/jane-smith-a1b2c3",
-    }
-
-    record = build_listing_record(payload)
-    assert record["slug"] == "jane-smith-a1b2c3"
-    assert record["life_dates"] == "1942-05-01 to 2026-03-10"
-
-    html = render_memorial_html(payload)
-    assert "Jane Smith | Alterna Cremation Obituaries" in html
-    assert "CancerCare Manitoba" in html
-    assert "assets/photo-1.jpg" in html
-
-    paths = write_import_bundle(payload, tmp_path)
-    assert paths["html"].exists()
-    assert paths["json"].exists()
-    assert paths["index"].exists()
-    assert "jane-smith-a1b2c3.html" in paths["index"].read_text(encoding="utf-8")

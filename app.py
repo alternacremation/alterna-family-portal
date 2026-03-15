@@ -39,11 +39,11 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "pdf", "doc", "docx", "heic"
 PUBLIC_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 STATUS_OPTIONS = ["New", "In Review", "Ready", "Completed"]
 WIZARD_STEPS = [
-    "Start here",
-    "About you",
-    "About the deceased",
-    "Obituary & files",
-    "Review",
+    "About your loved one",
+    "Vital statistics",
+    "Obituary",
+    "Photos",
+    "Authorization",
 ]
 
 app = Flask(__name__)
@@ -114,10 +114,6 @@ def now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
-def generate_case_reference() -> str:
-    return f"ALT-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-
-
 def init_db() -> None:
     upload_folder = Path(app.config["UPLOAD_FOLDER"])
     upload_folder.mkdir(parents=True, exist_ok=True)
@@ -131,13 +127,6 @@ def init_db() -> None:
         family_email TEXT NOT NULL,
         family_phone TEXT NOT NULL,
         relationship_to_deceased TEXT,
-        intake_type TEXT,
-        preplanning_for TEXT,
-        will_status TEXT,
-        executor_is_contact TEXT,
-        executor_name TEXT,
-        executor_phone TEXT,
-        executor_email TEXT,
         portal_token TEXT,
         preferred_name TEXT,
         family_message TEXT,
@@ -242,13 +231,6 @@ def init_db() -> None:
         columns = {row[1] for row in db.execute("PRAGMA table_info(submissions)").fetchall()}
         required_columns = {
             "updated_at": "ALTER TABLE submissions ADD COLUMN updated_at TEXT",
-            "intake_type": "ALTER TABLE submissions ADD COLUMN intake_type TEXT",
-            "preplanning_for": "ALTER TABLE submissions ADD COLUMN preplanning_for TEXT",
-            "will_status": "ALTER TABLE submissions ADD COLUMN will_status TEXT",
-            "executor_is_contact": "ALTER TABLE submissions ADD COLUMN executor_is_contact TEXT",
-            "executor_name": "ALTER TABLE submissions ADD COLUMN executor_name TEXT",
-            "executor_phone": "ALTER TABLE submissions ADD COLUMN executor_phone TEXT",
-            "executor_email": "ALTER TABLE submissions ADD COLUMN executor_email TEXT",
             "portal_token": "ALTER TABLE submissions ADD COLUMN portal_token TEXT",
             "preferred_name": "ALTER TABLE submissions ADD COLUMN preferred_name TEXT",
             "family_message": "ALTER TABLE submissions ADD COLUMN family_message TEXT",
@@ -528,18 +510,11 @@ def generate_obituary(form: dict[str, str]) -> str:
 
 def submission_dict_from_form(form: Any) -> dict[str, Any]:
     return {
-        "case_reference": form.get("case_reference", "").strip() or generate_case_reference(),
-        "intake_type": form.get("intake_type", "").strip(),
-        "preplanning_for": form.get("preplanning_for", "").strip(),
+        "case_reference": form.get("case_reference", "").strip(),
         "family_name": form.get("family_name", "").strip(),
         "family_email": form.get("family_email", "").strip(),
         "family_phone": cleaned_phone(form.get("family_phone", "")),
         "relationship_to_deceased": form.get("relationship_to_deceased", "").strip(),
-        "will_status": form.get("will_status", "").strip(),
-        "executor_is_contact": form.get("executor_is_contact", "").strip(),
-        "executor_name": form.get("executor_name", "").strip(),
-        "executor_phone": cleaned_phone(form.get("executor_phone", "")),
-        "executor_email": form.get("executor_email", "").strip(),
         "preferred_name": form.get("preferred_name", "").strip(),
         "family_message": multiline_compact(form.get("family_message", "")),
         "deceased_first_name": form.get("deceased_first_name", "").strip(),
@@ -624,7 +599,7 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             """
             INSERT INTO submissions (
                 created_at, updated_at, case_reference, family_name, family_email, family_phone,
-                relationship_to_deceased, intake_type, preplanning_for, will_status, executor_is_contact, executor_name, executor_phone, executor_email, portal_token, preferred_name, family_message,
+                relationship_to_deceased, portal_token, preferred_name, family_message,
                 deceased_first_name, deceased_middle_name, deceased_last_name, deceased_gender,
                 date_of_birth, date_of_death, place_of_death, birth_city, birth_region_country,
                 citizenship, sin_last_four, marital_status, spouse_name, children_details,
@@ -634,7 +609,7 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
                 obituary_tone, service_details, charity_requests, photo_notes, photo_deadline,
                 signature_name, privacy_consent, memorial_published, memorial_slug,
                 status, progress_step, family_status_note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 now,
@@ -644,13 +619,6 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
                 form_data["family_email"],
                 form_data["family_phone"],
                 form_data["relationship_to_deceased"],
-                form_data["intake_type"],
-                form_data["preplanning_for"],
-                form_data["will_status"],
-                form_data["executor_is_contact"],
-                form_data["executor_name"],
-                form_data["executor_phone"],
-                form_data["executor_email"],
                 portal_token,
                 form_data["preferred_name"],
                 form_data["family_message"],
@@ -716,7 +684,7 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
         """
         UPDATE submissions SET
             updated_at = ?, case_reference = ?, family_name = ?, family_email = ?, family_phone = ?,
-            relationship_to_deceased = ?, intake_type = ?, preplanning_for = ?, will_status = ?, executor_is_contact = ?, executor_name = ?, executor_phone = ?, executor_email = ?, preferred_name = ?, family_message = ?, deceased_first_name = ?,
+            relationship_to_deceased = ?, preferred_name = ?, family_message = ?, deceased_first_name = ?,
             deceased_middle_name = ?, deceased_last_name = ?, deceased_gender = ?, date_of_birth = ?,
             date_of_death = ?, place_of_death = ?, birth_city = ?, birth_region_country = ?, citizenship = ?,
             sin_last_four = ?, marital_status = ?, spouse_name = ?, children_details = ?, occupation = ?,
@@ -734,13 +702,6 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             form_data["family_email"],
             form_data["family_phone"],
             form_data["relationship_to_deceased"],
-            form_data["intake_type"],
-            form_data["preplanning_for"],
-            form_data["will_status"],
-            form_data["executor_is_contact"],
-            form_data["executor_name"],
-            form_data["executor_phone"],
-            form_data["executor_email"],
             form_data["preferred_name"],
             form_data["family_message"],
             form_data["deceased_first_name"],
@@ -787,7 +748,17 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
 
 
 def validate_submission(form_data: dict[str, Any]) -> list[str]:
-    return []
+    required = {
+        "case reference": form_data["case_reference"],
+        "family name": form_data["family_name"],
+        "family email": form_data["family_email"],
+        "family phone": form_data["family_phone"],
+        "deceased first name": form_data["deceased_first_name"],
+        "deceased last name": form_data["deceased_last_name"],
+        "informant name": form_data["informant_name"],
+        "signature name": form_data["signature_name"],
+    }
+    return [label.title() for label, value in required.items() if not value]
 
 
 def authenticate_staff(username: str, password: str) -> sqlite3.Row | None:
@@ -830,16 +801,15 @@ def submit() -> Response | str:
         if missing:
             flash(f"Please complete the required fields: {', '.join(missing)}.", "error")
             return render_template("submit.html", form_data=request.form)
-        try:
-            submission_id = upsert_submission(form_data)
-            save_uploaded_files(request.files.getlist("memorial_files"), submission_id)
-            submission = fetch_submission(submission_id)
-            flash("Thank you. Your information has been received.", "success")
-            return redirect(url_for("thank_you", token=submission["portal_token"]))
-        except Exception:
-            app.logger.exception("Family intake submission failed")
-            flash("Something went wrong while saving this test submission. Please try again.", "error")
-            return render_template("submit.html", form_data=request.form), 200
+        if not form_data["privacy_consent"]:
+            flash("Please confirm consent before submitting.", "error")
+            return render_template("submit.html", form_data=request.form)
+
+        submission_id = upsert_submission(form_data)
+        save_uploaded_files(request.files.getlist("memorial_files"), submission_id)
+        submission = fetch_submission(submission_id)
+        flash("Thank you. Your Alterna family portal has been created.", "success")
+        return redirect(url_for("thank_you", token=submission["portal_token"]))
 
     return render_template("submit.html", form_data={})
 
@@ -865,14 +835,12 @@ def family_portal(token: str) -> Response | str:
             missing = validate_submission(form_data)
             if missing:
                 flash(f"Please complete the required fields: {', '.join(missing)}.", "error")
+            elif not form_data["privacy_consent"]:
+                flash("Please confirm consent before saving.", "error")
             else:
-                try:
-                    upsert_submission(form_data, row)
-                    save_uploaded_files(request.files.getlist("memorial_files"), int(row["id"]))
-                    flash("Your information has been saved.", "success")
-                except Exception:
-                    app.logger.exception("Family portal save failed")
-                    flash("Something went wrong while saving this test submission. Please try again.", "error")
+                upsert_submission(form_data, row)
+                save_uploaded_files(request.files.getlist("memorial_files"), int(row["id"]))
+                flash("Your information has been saved.", "success")
         elif action == "message":
             message = request.form.get("message_text", "").strip()
             sender_name = request.form.get("sender_name", row["family_name"]).strip() or row["family_name"]

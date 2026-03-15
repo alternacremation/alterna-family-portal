@@ -3,15 +3,15 @@
 {% block content %}
 <section class="hero card">
     <div>
-        <p class="eyebrow">Alterna Cremation Family Portal</p>
-        <h1>A calm, clear way for families to share information online.</h1>
-        <p class="lead">Built to reflect Alterna’s soft blue, grey, and lilac palette, this testing portal keeps the tone simple, modern, and neighbourly while letting you preview intake, obituary drafting, uploads, messaging, and office review in one place.</p>
+        <p class="eyebrow">Alterna Family Connect</p>
+        <h1>A calm, modern way for families to complete arrangements online.</h1>
+        <p class="lead">Collect vital statistics, draft the obituary, upload photos, sign authorization, and keep everything in one secure place. This build is now a production-ready starter with staff accounts, audit logging, integration outbox events, public memorial JSON, and deployment files for a real rollout.</p>
         <div class="actions">
             <a class="button" href="{{ url_for('submit') }}">Start family intake</a>
             <a class="button secondary" href="{{ url_for('admin_login') }}">Open staff dashboard</a>
         </div>
     </div>
-    <aside class="summary-panel brand-panel">
+    <aside class="summary-panel">
         <h2>What this build now includes</h2>
         <ul class="feature-list">
             <li>Family wizard with five guided steps</li>
@@ -37,8 +37,8 @@
     </article>
     <article class="card mini-card">
         <p class="eyebrow">Integration</p>
-        <h3>Branded for testing</h3>
-        <p>All required fields are turned off in this testing version so you can click through freely before deciding what should be mandatory later.</p>
+        <h3>Ready for real rollout</h3>
+        <p>Outbox events and JSON feeds make it much easier to connect this portal to your website, notification flow, and future staff automation.</p>
     </article>
 </section>
 {% endblock %}

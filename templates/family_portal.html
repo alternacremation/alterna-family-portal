@@ -44,7 +44,9 @@
     <form method="post" enctype="multipart/form-data" class="form-grid">
         <input type="hidden" name="action" value="save_form">
         <div class="grid two">
-            <input type="hidden" name="case_reference" value="{{ row['case_reference'] }}">
+            <label>Case reference
+                <input name="case_reference" value="{{ row['case_reference'] }}">
+            </label>
             <label>Relationship to the deceased
                 <input name="relationship_to_deceased" value="{{ row['relationship_to_deceased'] or '' }}">
             </label>
