@@ -38,3 +38,47 @@
     </div>
 </section>
 {% endblock %}
+
+<!-- Obituary & Tributes Section -->
+<section class="card">
+<h2>Obituary & Tributes</h2>
+
+<p>Not everyone chooses to publish an obituary. If you would like one, we can help with that here.</p>
+
+<label>Would you like an obituary?</label>
+<select name="obit_choice">
+<option>No, not at this time</option>
+<option>Alterna website only</option>
+<option>Newspaper</option>
+<option>Website and newspaper</option>
+<option>I'm not sure yet</option>
+</select>
+
+<label>Newspaper</label>
+<select name="newspaper">
+<option>Winnipeg Free Press</option>
+<option>Other</option>
+</select>
+
+<label>Newspaper obituary (short version)</label>
+<textarea name="obit_newspaper"></textarea>
+
+<label>Website obituary (full version)</label>
+<textarea name="obit_web"></textarea>
+
+<p class="note">Winnipeg Free Press does not allow wording such as "longer obituary at alternacremation.ca".
+They do allow: <strong>Tributes may be shared at alternacremation.ca.</strong></p>
+
+<label>Photo for website</label>
+<input type="file" name="web_photo">
+
+<label>Photo for newspaper</label>
+<select name="paper_photo">
+<option>No photo</option>
+<option>Black and white</option>
+<option>Colour (+$65)</option>
+</select>
+
+<p class="note">Estimated newspaper cost: word count ×2 + $100, rounded to nearest $50.</p>
+
+</section>
