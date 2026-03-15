@@ -174,7 +174,7 @@
                 <label>Father’s place of birth
                     <input name="father_birthplace" value="{{ form_data.get('father_birthplace', '') }}">
                 </label>
-                <label>Mother’s name at birth
+                <label>Mother’s full name at birth
                     <input name="mother_birth_name" value="{{ form_data.get('mother_birth_name', '') }}">
                 </label>
                 <label>Mother’s place of birth
@@ -199,9 +199,6 @@
                     </select>
                 </label>
 
-                <label class="full">Children
-                    <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
-                </label>
                 {% set ms = form_data.get('marital_status', '') %}
                 <div class="full section-subgroup {% if ms not in ['Married', 'Common law'] %}hidden{% endif %}" data-partner-section>
                     <h3>Spouse or common law partner</h3>
