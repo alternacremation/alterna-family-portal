@@ -50,10 +50,6 @@
                     </label>
                 </div>
 
-                <label>Case reference (optional)
-                    <input name="case_reference" value="{{ form_data.get('case_reference', '') }}">
-                    <span class="mini">Leave blank and the portal will create one for you.</span>
-                </label>
             </div>
         </section>
 
@@ -79,7 +75,7 @@
                         {% endfor %}
                     </select>
                 </label>
-                <label>Is there a will?
+                <label>Did the deceased leave a will?
                     {% set will_status = form_data.get('will_status', '') %}
                     <select name="will_status" data-toggle-source="will_status">
                         <option value="">Select</option>
@@ -274,8 +270,8 @@
                     <span>I confirm the information above is accurate to the best of my knowledge.</span>
                 </label>
                 <div class="full card inner-card accent-card">
-                    <p><strong>Required field:</strong> your email address.</p>
-                    <p class="mini">Everything else can be completed now or later with Alterna.</p>
+                    <p><strong>Testing mode:</strong> nothing is required in this version.</p>
+                    <p class="mini">Submit whatever you want so we can test the flow, wording, and mobile experience.</p>
                 </div>
             </div>
         </section>
@@ -283,7 +279,7 @@
         <div class="wizard-actions">
             <button type="button" class="button secondary" data-prev>Back</button>
             <button type="button" class="button secondary" data-next>Next</button>
-            <button type="submit" class="button" data-submit hidden>Create family portal</button>
+            <button type="submit" class="button" data-submit hidden>Submit information</button>
         </div>
     </form>
 </section>

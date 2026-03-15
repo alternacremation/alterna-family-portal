@@ -78,7 +78,7 @@ def test_submit_page_has_new_intake_language(client):
     assert b"Yes, a death has occurred" in response.data
     assert b"No, a death has not occurred, I am pre-planning" in response.data
     assert b"Are you pre-planning for yourself or someone else?" in response.data
-    assert b"Is there a will?" in response.data
+    assert b"Did the deceased leave a will?" in response.data
     assert b"Same person as above" in response.data
     assert b"Sex" in response.data
 

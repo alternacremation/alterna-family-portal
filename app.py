@@ -830,11 +830,16 @@ def submit() -> Response | str:
         if missing:
             flash(f"Please complete the required fields: {', '.join(missing)}.", "error")
             return render_template("submit.html", form_data=request.form)
-        submission_id = upsert_submission(form_data)
-        save_uploaded_files(request.files.getlist("memorial_files"), submission_id)
-        submission = fetch_submission(submission_id)
-        flash("Thank you. Your Alterna family portal has been created.", "success")
-        return redirect(url_for("thank_you", token=submission["portal_token"]))
+        try:
+            submission_id = upsert_submission(form_data)
+            save_uploaded_files(request.files.getlist("memorial_files"), submission_id)
+            submission = fetch_submission(submission_id)
+            flash("Thank you. Your information has been received.", "success")
+            return redirect(url_for("thank_you", token=submission["portal_token"]))
+        except Exception:
+            app.logger.exception("Family intake submission failed")
+            flash("Something went wrong while saving this test submission. Please try again.", "error")
+            return render_template("submit.html", form_data=request.form), 200
 
     return render_template("submit.html", form_data={})
 
@@ -861,9 +866,13 @@ def family_portal(token: str) -> Response | str:
             if missing:
                 flash(f"Please complete the required fields: {', '.join(missing)}.", "error")
             else:
-                upsert_submission(form_data, row)
-                save_uploaded_files(request.files.getlist("memorial_files"), int(row["id"]))
-                flash("Your information has been saved.", "success")
+                try:
+                    upsert_submission(form_data, row)
+                    save_uploaded_files(request.files.getlist("memorial_files"), int(row["id"]))
+                    flash("Your information has been saved.", "success")
+                except Exception:
+                    app.logger.exception("Family portal save failed")
+                    flash("Something went wrong while saving this test submission. Please try again.", "error")
         elif action == "message":
             message = request.form.get("message_text", "").strip()
             sender_name = request.form.get("sender_name", row["family_name"]).strip() or row["family_name"]
