@@ -110,42 +110,6 @@
                         {% endfor %}
                     </select>
                 </label>
-                <label>Did the deceased leave a will?
-                    {% set will_status = form_data.get('will_status', '') %}
-                    <select name="will_status" data-toggle-source="will_status">
-                        <option value="">Select</option>
-                        <option value="Yes" {% if will_status == 'Yes' %}selected{% endif %}>Yes</option>
-                        <option value="No" {% if will_status == 'No' %}selected{% endif %}>No</option>
-                        <option value="Unsure" {% if will_status == 'Unsure' %}selected{% endif %}>Unsure</option>
-                    </select>
-                </label>
-
-                <div class="full toggle-block {% if will_status != 'Yes' %}hidden{% endif %}" data-toggle-target="will_status" data-toggle-value="Yes">
-                    <div class="grid two nested-grid">
-                        <label>Who is the executor?
-                            {% set same = form_data.get('executor_is_contact', '') %}
-                            <select name="executor_is_contact" data-toggle-source="executor_is_contact">
-                                <option value="">Select</option>
-                                <option value="same_person" {% if same == 'same_person' %}selected{% endif %}>Same person as above</option>
-                                <option value="other_person" {% if same == 'other_person' %}selected{% endif %}>Someone else</option>
-                            </select>
-                        </label>
-
-                        <div class="toggle-block {% if same != 'other_person' %}hidden{% endif %} full" data-toggle-target="executor_is_contact" data-toggle-value="other_person">
-                            <div class="grid two nested-grid">
-                                <label>Executor name
-                                    <input name="executor_name" value="{{ form_data.get('executor_name', '') }}">
-                                </label>
-                                <label>Executor phone
-                                    <input name="executor_phone" value="{{ form_data.get('executor_phone', '') }}">
-                                </label>
-                                <label class="full">Executor email
-                                    <input type="email" name="executor_email" value="{{ form_data.get('executor_email', '') }}">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -194,6 +158,10 @@
                 <label>Province / state / country of birth
                     <input name="birth_region_country" value="{{ form_data.get('birth_region_country', '') }}">
                 </label>
+                <div class="full section-subgroup">
+                    <h3>Vital statistics</h3>
+                    <p class="mini">This section is still about the deceased.</p>
+                </div>
                 <label>Was the deceased retired?
                     {% set retired = form_data.get('retired_status', '') %}
                     <select name="retired_status">
@@ -211,6 +179,29 @@
                     <input name="industry" value="{{ form_data.get('industry', '') }}">
                     <span class="mini">If retired, enter the most recent industry.</span>
                 </label>
+                <label>Usual residence
+                    <input name="usual_residence" value="{{ form_data.get('usual_residence', '') }}">
+                </label>
+                <div class="full section-subgroup">
+                    <h3>Parents of the deceased</h3>
+                    <p class="mini">The next questions refer to the deceased’s parents, not the spouse or partner.</p>
+                </div>
+                <label>Father’s full name
+                    <input name="father_name" value="{{ form_data.get('father_name', '') }}">
+                </label>
+                <label>Mother’s full name
+                    <input name="mother_name" value="{{ form_data.get('mother_name', '') }}">
+                </label>
+                <label>Mother’s maiden name
+                    <input name="mother_maiden_name" value="{{ form_data.get('mother_maiden_name', '') }}">
+                </label>
+                <label class="full">Children
+                    <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
+                </label>
+                <div class="full section-subgroup">
+                    <h3>Spouse or common law partner</h3>
+                    <p class="mini">We ask these questions near the end because families often assume the parents section refers to the spouse. It does not.</p>
+                </div>
                 <div class="full grid two hidden" data-partner-fields>
                     {% set rel = form_data.get('relationship_to_deceased', '') %}
                     {% set reuse = form_data.get('reuse_contact_for_partner', '') %}
@@ -244,28 +235,52 @@
                     </label>
                 </div>
                 <div class="full grid two hidden" data-previous-partner-fields>
-                    <label>Previous spouse’s full name at birth
+                    <label>Former spouse’s full name at birth
                         <input name="previous_partner_birth_name" value="{{ form_data.get('previous_partner_birth_name', '') }}">
                     </label>
-                    <label>Previous spouse’s place of birth
+                    <label>Former spouse’s place of birth
                         <input name="previous_partner_place_of_birth" value="{{ form_data.get('previous_partner_place_of_birth', '') }}">
                     </label>
                 </div>
-                <label>Usual residence
-                    <input name="usual_residence" value="{{ form_data.get('usual_residence', '') }}">
+                <div class="full section-subgroup">
+                    <h3>Will and executor</h3>
+                    <p class="mini">This is the final section in the vital statistics flow.</p>
+                </div>
+                <label>Did the deceased leave a will?
+                    {% set will_status = form_data.get('will_status', '') %}
+                    <select name="will_status" data-toggle-source="will_status">
+                        <option value="">Select</option>
+                        <option value="Yes" {% if will_status == 'Yes' %}selected{% endif %}>Yes</option>
+                        <option value="No" {% if will_status == 'No' %}selected{% endif %}>No</option>
+                        <option value="Unsure" {% if will_status == 'Unsure' %}selected{% endif %}>Unsure</option>
+                    </select>
                 </label>
-                <label>Father’s full name
-                    <input name="father_name" value="{{ form_data.get('father_name', '') }}">
-                </label>
-                <label>Mother’s full name
-                    <input name="mother_name" value="{{ form_data.get('mother_name', '') }}">
-                </label>
-                <label>Mother’s maiden name
-                    <input name="mother_maiden_name" value="{{ form_data.get('mother_maiden_name', '') }}">
-                </label>
-                <label class="full">Children
-                    <textarea name="children_details" rows="3">{{ form_data.get('children_details', '') }}</textarea>
-                </label>
+                <div class="full toggle-block {% if will_status != 'Yes' %}hidden{% endif %}" data-toggle-target="will_status" data-toggle-value="Yes">
+                    <div class="grid two nested-grid">
+                        <label>Who is the executor?
+                            {% set same = form_data.get('executor_is_contact', '') %}
+                            <select name="executor_is_contact" data-toggle-source="executor_is_contact">
+                                <option value="">Select</option>
+                                <option value="same_person" {% if same == 'same_person' %}selected{% endif %}>Same person as above</option>
+                                <option value="other_person" {% if same == 'other_person' %}selected{% endif %}>Someone else</option>
+                            </select>
+                        </label>
+
+                        <div class="toggle-block {% if same != 'other_person' %}hidden{% endif %} full" data-toggle-target="executor_is_contact" data-toggle-value="other_person">
+                            <div class="grid two nested-grid">
+                                <label>Executor name
+                                    <input name="executor_name" value="{{ form_data.get('executor_name', '') }}">
+                                </label>
+                                <label>Executor phone
+                                    <input name="executor_phone" value="{{ form_data.get('executor_phone', '') }}">
+                                </label>
+                                <label class="full">Executor email
+                                    <input type="email" name="executor_email" value="{{ form_data.get('executor_email', '') }}">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <label>Disposition type
                     {% set disposition = form_data.get('disposition_type', '') %}
                     <select name="disposition_type">
