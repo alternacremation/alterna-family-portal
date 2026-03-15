@@ -42,7 +42,7 @@ WIZARD_STEPS = [
     "Start here",
     "About you",
     "About the deceased",
-    "Obituary & files",
+    "Obituary & Tributes",
     "Review",
 ]
 
@@ -200,6 +200,21 @@ def init_db() -> None:
         obituary_text TEXT,
         obituary_generated TEXT,
         obituary_tone TEXT,
+        obituary_request TEXT,
+        obituary_newspaper TEXT,
+        obituary_other_newspaper TEXT,
+        obituary_same_text TEXT,
+        obituary_existing_status TEXT,
+        obituary_input_text TEXT,
+        website_obituary_text TEXT,
+        newspaper_obituary_text TEXT,
+        website_photo_choice TEXT,
+        newspaper_photo_choice TEXT,
+        obituary_review_preference TEXT,
+        obituary_hobbies TEXT,
+        obituary_personality TEXT,
+        obituary_survived_by TEXT,
+        obituary_predeceased_by TEXT,
         service_details TEXT,
         charity_requests TEXT,
         photo_notes TEXT,
@@ -303,6 +318,21 @@ def init_db() -> None:
             "obituary_style": "ALTER TABLE submissions ADD COLUMN obituary_style TEXT",
             "obituary_generated": "ALTER TABLE submissions ADD COLUMN obituary_generated TEXT",
             "obituary_tone": "ALTER TABLE submissions ADD COLUMN obituary_tone TEXT",
+            "obituary_request": "ALTER TABLE submissions ADD COLUMN obituary_request TEXT",
+            "obituary_newspaper": "ALTER TABLE submissions ADD COLUMN obituary_newspaper TEXT",
+            "obituary_other_newspaper": "ALTER TABLE submissions ADD COLUMN obituary_other_newspaper TEXT",
+            "obituary_same_text": "ALTER TABLE submissions ADD COLUMN obituary_same_text TEXT",
+            "obituary_existing_status": "ALTER TABLE submissions ADD COLUMN obituary_existing_status TEXT",
+            "obituary_input_text": "ALTER TABLE submissions ADD COLUMN obituary_input_text TEXT",
+            "website_obituary_text": "ALTER TABLE submissions ADD COLUMN website_obituary_text TEXT",
+            "newspaper_obituary_text": "ALTER TABLE submissions ADD COLUMN newspaper_obituary_text TEXT",
+            "website_photo_choice": "ALTER TABLE submissions ADD COLUMN website_photo_choice TEXT",
+            "newspaper_photo_choice": "ALTER TABLE submissions ADD COLUMN newspaper_photo_choice TEXT",
+            "obituary_review_preference": "ALTER TABLE submissions ADD COLUMN obituary_review_preference TEXT",
+            "obituary_hobbies": "ALTER TABLE submissions ADD COLUMN obituary_hobbies TEXT",
+            "obituary_personality": "ALTER TABLE submissions ADD COLUMN obituary_personality TEXT",
+            "obituary_survived_by": "ALTER TABLE submissions ADD COLUMN obituary_survived_by TEXT",
+            "obituary_predeceased_by": "ALTER TABLE submissions ADD COLUMN obituary_predeceased_by TEXT",
             "photo_deadline": "ALTER TABLE submissions ADD COLUMN photo_deadline TEXT",
             "staff_notes": "ALTER TABLE submissions ADD COLUMN staff_notes TEXT",
             "signature_name": "ALTER TABLE submissions ADD COLUMN signature_name TEXT",
@@ -574,61 +604,48 @@ def parse_place_of_death(raw_value: str) -> dict[str, str]:
     return parsed
 
 def generate_obituary(form: dict[str, str]) -> str:
-    first_name = form.get("preferred_name") or form.get("deceased_first_name") or "Your loved one"
-    legal_name = " ".join(
-        part for part in [form.get("deceased_first_name"), form.get("deceased_middle_name"), form.get("deceased_last_name")] if part
-    ).strip()
-    date_of_death = form.get("date_of_death") or "recently"
-    place_of_death = form.get("place_of_death") or ""
-    date_of_birth = form.get("date_of_birth") or ""
+    first_name = form.get("preferred_name") or form.get("deceased_first_name") or "Their loved one"
+    full_name = " ".join(part for part in [form.get("deceased_first_name", "").strip(), form.get("deceased_middle_name", "").strip(), form.get("deceased_last_name", "").strip()] if part)
+    city = form.get("usual_residence") or form.get("birth_city") or "Winnipeg"
+    date_of_death = form.get("date_of_death") or ""
     occupation = form.get("occupation") or ""
-    industry = form.get("industry") or ""
-    spouse = form.get("partner_current_legal_name") or form.get("spouse_name") or ""
-    children = form.get("children_details") or ""
+    hobbies = form.get("obituary_hobbies") or ""
+    personality = form.get("obituary_personality") or ""
+    survived_by = form.get("obituary_survived_by") or ""
+    predeceased_by = form.get("obituary_predeceased_by") or ""
     service_details = form.get("service_details") or ""
-    charity = form.get("charity_requests") or ""
-    family_message = form.get("family_message") or ""
-    style = (form.get("obituary_style") or form.get("obituary_tone") or "simple announcement").strip().lower()
-    if style == "no obituary":
-        return ""
 
-    intro = f"{first_name} passed away"
-    if place_of_death:
-        intro += f" in {place_of_death}"
+    parts: list[str] = []
+    opening_name = full_name or first_name
+    opening = f"{opening_name} passed away"
     if date_of_death:
-        intro += f" on {date_of_death}"
-    if date_of_birth:
-        intro += f", born {date_of_birth}"
-    intro += "."
+        opening += f" on {date_of_death}"
+    if city:
+        opening += f" in {city}"
+    opening += "."
+    parts.append(opening)
 
-    details: list[str] = [intro]
-    if occupation and industry:
-        details.append(f"{first_name} was known for a life of hard work and dedication in {industry} as {occupation}.")
-    elif occupation:
-        details.append(f"{first_name} was known for a life of hard work and dedication as {occupation}.")
-    elif industry:
-        details.append(f"{first_name} was known for a life of hard work and dedication in {industry}.")
-    if spouse:
-        details.append(f"{first_name} will be deeply missed by {spouse}.")
-    if children:
-        details.append(f"Loved ones include: {children}.")
-    if family_message:
-        details.append(family_message)
+    descriptors = []
+    if occupation:
+        descriptors.append(f"{first_name} worked in {occupation}")
+    if personality:
+        descriptors.append(personality.rstrip('.'))
+    if hobbies:
+        descriptors.append(f"{first_name} enjoyed {hobbies.rstrip('.')}")
+    if descriptors:
+        parts.append(". ".join(descriptors) + ".")
+
+    if survived_by:
+        parts.append(f"{first_name} will be remembered by {survived_by.rstrip('.') }.")
+    if predeceased_by:
+        parts.append(f"Predeceased by {predeceased_by.rstrip('.') }.")
     if service_details:
-        details.append(f"Service information: {service_details}.")
-    if charity:
-        details.append(f"In lieu of flowers, the family asks that consideration be given to {charity}.")
-
-    if style.startswith("celebration"):
-        details.append(f"{first_name} leaves behind many stories, laughs, and memories that will continue to be shared.")
-    elif style.startswith("traditional"):
-        details.append("The family is grateful for the support and kindness shown during this time.")
-    else:
-        details.append("Arrangements are in care of Alterna Cremation.")
-
-    if legal_name and legal_name != first_name:
-        details.insert(0, legal_name)
-    return "\n\n".join(part.strip() for part in details if part.strip())
+        parts.append(service_details.strip())
+    if form.get("obituary_request") in {"website", "both"}:
+        parts.append("Tributes may be shared at alternacremation.ca.")
+    elif not service_details:
+        parts.append("Arrangements are in care of Alterna Cremation.")
+    return "\n\n".join(part.strip() for part in parts if part and part.strip())
 
 
 def submission_dict_from_form(form: Any) -> dict[str, Any]:
@@ -698,6 +715,21 @@ def submission_dict_from_form(form: Any) -> dict[str, Any]:
         "obituary_headline": form.get("obituary_headline", "").strip(),
         "obituary_text": multiline_compact(form.get("obituary_text", "")),
         "obituary_tone": form.get("obituary_tone", "").strip(),
+        "obituary_request": form.get("obituary_request", "").strip(),
+        "obituary_newspaper": form.get("obituary_newspaper", "").strip(),
+        "obituary_other_newspaper": form.get("obituary_other_newspaper", "").strip(),
+        "obituary_same_text": form.get("obituary_same_text", "").strip(),
+        "obituary_existing_status": form.get("obituary_existing_status", "").strip(),
+        "obituary_input_text": multiline_compact(form.get("obituary_input_text", "")),
+        "website_obituary_text": multiline_compact(form.get("website_obituary_text", "")),
+        "newspaper_obituary_text": multiline_compact(form.get("newspaper_obituary_text", "")),
+        "website_photo_choice": form.get("website_photo_choice", "").strip(),
+        "newspaper_photo_choice": form.get("newspaper_photo_choice", "").strip(),
+        "obituary_review_preference": form.get("obituary_review_preference", "").strip(),
+        "obituary_hobbies": multiline_compact(form.get("obituary_hobbies", "")),
+        "obituary_personality": multiline_compact(form.get("obituary_personality", "")),
+        "obituary_survived_by": multiline_compact(form.get("obituary_survived_by", "")),
+        "obituary_predeceased_by": multiline_compact(form.get("obituary_predeceased_by", "")),
         "service_details": multiline_compact(form.get("service_details", "")),
         "charity_requests": multiline_compact(form.get("charity_requests", "")),
         "photo_notes": multiline_compact(form.get("photo_notes", "")),
@@ -725,7 +757,7 @@ def public_memorial_payload(row: sqlite3.Row) -> dict[str, Any]:
         "date_of_birth": row["date_of_birth"],
         "date_of_death": row["date_of_death"],
         "headline": row["obituary_headline"],
-        "obituary": row["obituary_text"] or row["obituary_generated"],
+        "obituary": row["website_obituary_text"] or row["obituary_text"] or row["obituary_generated"],
         "service_details": row["service_details"],
         "charity_requests": row["charity_requests"],
         "photos": uploads,
@@ -739,9 +771,23 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
     db = get_db()
     now = now_iso()
 
-    obituary_text = form_data["obituary_text"]
+    obituary_text = form_data.get("website_obituary_text") or form_data.get("obituary_input_text") or form_data["obituary_text"] or form_data.get("newspaper_obituary_text", "")
     obituary_generated = ""
-    if form_data.get("obituary_style") and not obituary_text:
+    if (form_data.get("obituary_style") or "").strip().lower() == "no obituary":
+        obituary_text = ""
+        obituary_generated = ""
+    elif form_data.get("obituary_existing_status") == "help" and not obituary_text:
+        obituary_generated = generate_obituary(form_data)
+        if form_data.get("obituary_request") in {"website", "both"}:
+            form_data["website_obituary_text"] = obituary_generated
+            if form_data.get("obituary_request") == "website":
+                form_data["obituary_same_text"] = "same"
+        elif form_data.get("obituary_request") == "newspaper":
+            form_data["newspaper_obituary_text"] = obituary_generated
+        else:
+            form_data["obituary_input_text"] = obituary_generated
+        obituary_text = obituary_generated
+    elif not obituary_text and form_data.get("obituary_style") and not form_data.get("obituary_request"):
         obituary_generated = generate_obituary(form_data)
         obituary_text = obituary_generated
 
@@ -760,10 +806,12 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
                 previous_partner_place_of_birth, children_details, occupation, industry, retired_status, usual_residence, father_name, mother_name, mother_maiden_name,
                 informant_name, informant_email, informant_phone, informant_address,
                 disposition_type, obituary_style, obituary_headline, obituary_text, obituary_generated,
-                obituary_tone, service_details, charity_requests, photo_notes, photo_deadline,
+                obituary_tone, obituary_request, obituary_newspaper, obituary_other_newspaper, obituary_same_text, obituary_existing_status,
+                obituary_input_text, website_obituary_text, newspaper_obituary_text, website_photo_choice, newspaper_photo_choice, obituary_review_preference,
+                obituary_hobbies, obituary_personality, obituary_survived_by, obituary_predeceased_by, service_details, charity_requests, photo_notes, photo_deadline,
                 signature_name, privacy_consent, memorial_published, memorial_slug,
                 status, progress_step, family_status_note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 now,
@@ -822,6 +870,21 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
                 obituary_text,
                 obituary_generated,
                 form_data["obituary_tone"],
+                form_data["obituary_request"],
+                form_data["obituary_newspaper"],
+                form_data["obituary_other_newspaper"],
+                form_data["obituary_same_text"],
+                form_data["obituary_existing_status"],
+                form_data["obituary_input_text"],
+                form_data["website_obituary_text"],
+                form_data["newspaper_obituary_text"],
+                form_data["website_photo_choice"],
+                form_data["newspaper_photo_choice"],
+                form_data["obituary_review_preference"],
+                form_data["obituary_hobbies"],
+                form_data["obituary_personality"],
+                form_data["obituary_survived_by"],
+                form_data["obituary_predeceased_by"],
                 form_data["service_details"],
                 form_data["charity_requests"],
                 form_data["photo_notes"],
@@ -863,7 +926,9 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             usual_residence = ?, father_name = ?, mother_name = ?, mother_maiden_name = ?,
             informant_name = ?, informant_email = ?, informant_phone = ?, informant_address = ?,
             disposition_type = ?, obituary_style = ?, obituary_headline = ?, obituary_text = ?,
-            obituary_generated = ?, obituary_tone = ?, service_details = ?, charity_requests = ?,
+            obituary_generated = ?, obituary_tone = ?, obituary_request = ?, obituary_newspaper = ?, obituary_other_newspaper = ?, obituary_same_text = ?, obituary_existing_status = ?,
+            obituary_input_text = ?, website_obituary_text = ?, newspaper_obituary_text = ?, website_photo_choice = ?, newspaper_photo_choice = ?, obituary_review_preference = ?,
+            obituary_hobbies = ?, obituary_personality = ?, obituary_survived_by = ?, obituary_predeceased_by = ?, service_details = ?, charity_requests = ?,
             photo_notes = ?, photo_deadline = ?, signature_name = ?, privacy_consent = ?
         WHERE id = ?
         """,
@@ -922,6 +987,21 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
             obituary_text,
             obituary_generated,
             form_data["obituary_tone"],
+            form_data["obituary_request"],
+            form_data["obituary_newspaper"],
+            form_data["obituary_other_newspaper"],
+            form_data["obituary_same_text"],
+            form_data["obituary_existing_status"],
+            form_data["obituary_input_text"],
+            form_data["website_obituary_text"],
+            form_data["newspaper_obituary_text"],
+            form_data["website_photo_choice"],
+            form_data["newspaper_photo_choice"],
+            form_data["obituary_review_preference"],
+            form_data["obituary_hobbies"],
+            form_data["obituary_personality"],
+            form_data["obituary_survived_by"],
+            form_data["obituary_predeceased_by"],
             form_data["service_details"],
             form_data["charity_requests"],
             form_data["photo_notes"],
@@ -1308,7 +1388,7 @@ def submission_summary_pdf(submission_id: int) -> Response:
             f"Phone: {row['informant_phone'] or ''}",
             f"Address: {row['informant_address'] or ''}",
         ]),
-        ("Obituary", [row['obituary_text'] or row['obituary_generated'] or 'No obituary draft provided.']),
+        ("Obituary", [row['website_obituary_text'] or row['obituary_text'] or row['obituary_generated'] or 'No obituary draft provided.']),
         ("Internal notes", [row['staff_notes'] or 'No staff notes yet.']),
     ]
     for title, lines in sections:

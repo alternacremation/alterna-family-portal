@@ -309,57 +309,179 @@
         </section>
 
         <section class="wizard-panel" data-step="4">
-            <div class="section-divider"><h2>Obituary and files</h2><p class="mini">These items are optional and can be completed later.</p></div>
+            <div class="section-divider"><h2>Obituary & tributes</h2><p class="mini">Not everyone chooses to publish an obituary. If you would like one, we can help you write and publish it here. You can also return later to add one.</p></div>
             <div class="grid two">
-                <label>Obituary style
-                    {% set style = form_data.get('obituary_style', '') %}
-                    <select name="obituary_style">
+                <label class="full">Would you like an obituary or tribute notice?
+                    {% set obituary_request = form_data.get('obituary_request', '') %}
+                    <select name="obituary_request" data-toggle-source="obituary_request">
                         <option value="">Select</option>
-                        {% for option in ['Simple announcement', 'Traditional obituary', 'Celebration of life', 'No obituary'] %}
-                        <option value="{{ option }}" {% if style == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
+                        <option value="none" {% if obituary_request == 'none' %}selected{% endif %}>No obituary at this time</option>
+                        <option value="website" {% if obituary_request == 'website' %}selected{% endif %}>Alterna website obituary</option>
+                        <option value="newspaper" {% if obituary_request == 'newspaper' %}selected{% endif %}>Newspaper obituary</option>
+                        <option value="both" {% if obituary_request == 'both' %}selected{% endif %}>Both website and newspaper</option>
+                        <option value="unsure" {% if obituary_request == 'unsure' %}selected{% endif %}>I’m not sure yet</option>
                     </select>
                 </label>
-                <label>Obituary tone
-                    {% set tone = form_data.get('obituary_tone', '') %}
-                    <select name="obituary_tone">
-                        <option value="">Select</option>
-                        {% for option in ['Warm and simple', 'Traditional', 'Celebratory'] %}
-                        <option value="{{ option }}" {% if tone == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label class="full">Headline or opening line
-                    <input name="obituary_headline" value="{{ form_data.get('obituary_headline', '') }}">
-                </label>
-                <label class="full">Tell us about their life, personality, and what you want included
-                    <textarea name="family_message" rows="5">{{ form_data.get('family_message', '') }}</textarea>
-                </label>
-                <label class="full">Service details
-                    <textarea name="service_details" rows="4">{{ form_data.get('service_details', '') }}</textarea>
-                </label>
-                <label class="full">Charity or donation requests
-                    <textarea name="charity_requests" rows="3">{{ form_data.get('charity_requests', '') }}</textarea>
-                </label>
-                <label class="full">Draft obituary text (optional, leave blank and the portal will create a simple draft)
-                    <textarea class="obituary-box" name="obituary_text" rows="10">{{ form_data.get('obituary_text', '') }}</textarea>
-                </label>
-                <label class="full">Upload photos or documents
-                    <input type="file" name="memorial_files" multiple>
-                    <span class="mini">Accepted formats: JPG, PNG, WEBP, HEIC, PDF, DOC, DOCX</span>
-                </label>
-                <div class="full hidden" data-marriage-upload>
-                    <label class="full">Marriage certificate (optional)
-                        <input type="file" name="memorial_files" multiple>
-                        <span class="mini">If you do not have it handy, you can upload it later by returning to the portal.</span>
-                    </label>
+
+                <div class="full toggle-block {% if obituary_request in ['', 'none', 'unsure'] %}hidden{% endif %}" data-toggle-target="obituary_request_multi">
+                    <div class="grid two nested-grid">
+                        <div class="full section-subgroup">
+                            <h3>Publication details</h3>
+                        </div>
+                        <div class="full toggle-block {% if obituary_request not in ['newspaper', 'both'] %}hidden{% endif %}" data-toggle-target="obituary_request_newspaper">
+                            <div class="grid two nested-grid">
+                                <label>Which newspaper?
+                                    {% set obituary_newspaper = form_data.get('obituary_newspaper', '') %}
+                                    <select name="obituary_newspaper" data-toggle-source="obituary_newspaper">
+                                        <option value="">Select</option>
+                                        <option value="Winnipeg Free Press" {% if obituary_newspaper == 'Winnipeg Free Press' %}selected{% endif %}>Winnipeg Free Press</option>
+                                        <option value="Other" {% if obituary_newspaper == 'Other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                </label>
+                                <div class="toggle-block {% if form_data.get('obituary_newspaper') != 'Other' %}hidden{% endif %}" data-toggle-target="obituary_newspaper" data-toggle-value="Other">
+                                    <label>Name of newspaper
+                                        <input name="obituary_other_newspaper" value="{{ form_data.get('obituary_other_newspaper', '') }}">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="full toggle-block {% if obituary_request != 'both' %}hidden{% endif %}" data-toggle-target="obituary_request" data-toggle-value="both">
+                            <label>Will the obituary text be the same in both places?
+                                {% set obituary_same_text = form_data.get('obituary_same_text', '') %}
+                                <select name="obituary_same_text" data-toggle-source="obituary_same_text">
+                                    <option value="">Select</option>
+                                    <option value="same" {% if obituary_same_text == 'same' %}selected{% endif %}>Yes, use the same obituary</option>
+                                    <option value="different" {% if obituary_same_text == 'different' %}selected{% endif %}>No, I would like a shorter version for the newspaper</option>
+                                </select>
+                            </label>
+                            <p class="mini">Many families use a shorter version in the newspaper and a longer version on the website.</p>
+                        </div>
+
+                        <label class="full">Do you already have an obituary written?
+                            {% set obituary_existing_status = form_data.get('obituary_existing_status', '') %}
+                            <select name="obituary_existing_status" data-toggle-source="obituary_existing_status">
+                                <option value="">Select</option>
+                                <option value="ready" {% if obituary_existing_status == 'ready' %}selected{% endif %}>Yes, I have one ready</option>
+                                <option value="started" {% if obituary_existing_status == 'started' %}selected{% endif %}>I have something started</option>
+                                <option value="help" {% if obituary_existing_status == 'help' %}selected{% endif %}>I would like help writing one</option>
+                            </select>
+                        </label>
+
+                        <div class="full toggle-block {% if obituary_existing_status not in ['ready', 'started'] %}hidden{% endif %}" data-toggle-target="obituary_existing_status_text_multi">
+                            <div class="grid two nested-grid">
+                                <label class="full">Paste obituary text or what you have written so far
+                                    <textarea name="obituary_input_text" rows="8">{{ form_data.get('obituary_input_text', '') }}</textarea>
+                                </label>
+                                <label class="full">Upload obituary text or document
+                                    <input type="file" name="memorial_files" multiple>
+                                    <span class="mini">You can upload a Word document, PDF, or text file along with other photos and documents below.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="full toggle-block {% if obituary_existing_status != 'help' %}hidden{% endif %}" data-toggle-target="obituary_existing_status" data-toggle-value="help">
+                            <div class="grid two nested-grid">
+                                <div class="full section-subgroup">
+                                    <h3>Obituary helper</h3>
+                                    <p class="mini">Answer as much or as little as you wish. We can use this to create a draft.</p>
+                                </div>
+                                <label class="full">Hobbies or interests
+                                    <textarea name="obituary_hobbies" rows="3">{{ form_data.get('obituary_hobbies', '') }}</textarea>
+                                </label>
+                                <label class="full">Personality, values, or what they were known for
+                                    <textarea name="obituary_personality" rows="3">{{ form_data.get('obituary_personality', '') }}</textarea>
+                                </label>
+                                <label class="full">Survived by
+                                    <textarea name="obituary_survived_by" rows="3">{{ form_data.get('obituary_survived_by', '') }}</textarea>
+                                </label>
+                                <label class="full">Predeceased by
+                                    <textarea name="obituary_predeceased_by" rows="3">{{ form_data.get('obituary_predeceased_by', '') }}</textarea>
+                                </label>
+                                <label class="full">Service details or tribute note
+                                    <textarea name="service_details" rows="4">{{ form_data.get('service_details', '') }}</textarea>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="full toggle-block {% if obituary_request not in ['website', 'newspaper', 'both'] %}hidden{% endif %}" data-toggle-target="obituary_text_blocks_multi">
+                            <div class="grid two nested-grid">
+                                <label class="full toggle-block {% if obituary_request not in ['website', 'both'] %}hidden{% endif %}" data-toggle-target="obituary_request_website">
+                                    Website obituary{% if obituary_request == 'both' and form_data.get('obituary_same_text') == 'different' %}, full version{% endif %}
+                                    <textarea class="obituary-box" name="website_obituary_text" rows="8">{{ form_data.get('website_obituary_text', '') }}</textarea>
+                                    <span class="mini">This version can be longer and include stories, memories, and tributes.</span>
+                                </label>
+                                <label class="full toggle-block {% if obituary_request not in ['newspaper', 'both'] %}hidden{% endif %}" data-toggle-target="obituary_request_newspaper">
+                                    Newspaper obituary{% if obituary_request == 'both' %}, short version{% endif %}
+                                    <textarea class="obituary-box" name="newspaper_obituary_text" rows="7">{{ form_data.get('newspaper_obituary_text', '') }}</textarea>
+                                    <span class="mini">Newspaper notices are usually shorter because pricing is based on word count.</span>
+                                </label>
+                                <label class="full toggle-block {% if obituary_request == 'both' and form_data.get('obituary_same_text') == 'different' %}hidden{% endif %}" data-toggle-target="obituary_same_text_same_or_single">
+                                    Shared obituary text
+                                    <textarea class="obituary-box" name="obituary_text" rows="8">{{ form_data.get('obituary_text', '') }}</textarea>
+                                    <span class="mini">Use this when the same wording will be used in one place, or in both places.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="full section-subgroup">
+                            <h3>Photo preferences</h3>
+                        </div>
+                        <label>Would you like a photo on the Alterna website?
+                            {% set website_photo_choice = form_data.get('website_photo_choice', '') %}
+                            <select name="website_photo_choice">
+                                <option value="">Select</option>
+                                <option value="yes" {% if website_photo_choice == 'yes' %}selected{% endif %}>Yes</option>
+                                <option value="no" {% if website_photo_choice == 'no' %}selected{% endif %}>No photo</option>
+                            </select>
+                        </label>
+                        <div class="toggle-block {% if obituary_request not in ['newspaper', 'both'] %}hidden{% endif %}" data-toggle-target="obituary_request_newspaper">
+                            <label>Photo in the newspaper obituary
+                                {% set newspaper_photo_choice = form_data.get('newspaper_photo_choice', '') %}
+                                <select name="newspaper_photo_choice">
+                                    <option value="">Select</option>
+                                    <option value="none" {% if newspaper_photo_choice == 'none' %}selected{% endif %}>No photo</option>
+                                    <option value="black_white" {% if newspaper_photo_choice == 'black_white' %}selected{% endif %}>Black and white photo</option>
+                                    <option value="colour" {% if newspaper_photo_choice == 'colour' %}selected{% endif %}>Colour photo</option>
+                                </select>
+                                <span class="mini">Colour photographs in the Winnipeg Free Press add $65.</span>
+                            </label>
+                        </div>
+
+                        <label class="full">Upload photos or documents
+                            <input type="file" name="memorial_files" multiple>
+                            <span class="mini">Accepted formats: JPG, PNG, WEBP, HEIC, PDF, DOC, DOCX</span>
+                        </label>
+
+                        <div class="full card inner-card accent-card toggle-block {% if form_data.get('obituary_newspaper') != 'Winnipeg Free Press' %}hidden{% endif %}" data-toggle-target="obituary_newspaper" data-toggle-value="Winnipeg Free Press">
+                            <p><strong>Winnipeg Free Press note:</strong> The Winnipeg Free Press does not allow wording such as “longer obituary at alternacremation.ca”.</p>
+                            <p class="mini">They do allow: <strong>“Tributes may be shared at alternacremation.ca.”</strong> We will make sure the wording meets their guidelines.</p>
+                        </div>
+
+                        <div class="full card inner-card" data-obituary-estimate-card>
+                            <p><strong>Estimated newspaper obituary cost</strong></p>
+                            <p class="mini" data-obituary-wordcount>Word count: 0</p>
+                            <p class="mini" data-obituary-estimate>Estimated total: $0</p>
+                            <p class="mini">Estimate based on current Winnipeg Free Press pricing formula. Final newspaper cost may vary.</p>
+                        </div>
+
+                        <label class="full">Would you like us to review and edit the obituary before publication?
+                            {% set obituary_review_preference = form_data.get('obituary_review_preference', '') %}
+                            <select name="obituary_review_preference">
+                                <option value="">Select</option>
+                                <option value="review" {% if obituary_review_preference == 'review' %}selected{% endif %}>Yes please review it</option>
+                                <option value="ready" {% if obituary_review_preference == 'ready' %}selected{% endif %}>It is ready for publication</option>
+                            </select>
+                        </label>
+
+                        <label class="full">Photo notes or captions
+                            <textarea name="photo_notes" rows="4">{{ form_data.get('photo_notes', '') }}</textarea>
+                        </label>
+                        <label>Preferred photo deadline
+                            <input type="date" name="photo_deadline" value="{{ form_data.get('photo_deadline', '') }}">
+                        </label>
+                    </div>
                 </div>
-                <label class="full">Photo notes or captions
-                    <textarea name="photo_notes" rows="4">{{ form_data.get('photo_notes', '') }}</textarea>
-                </label>
-                <label>Preferred photo deadline
-                    <input type="date" name="photo_deadline" value="{{ form_data.get('photo_deadline', '') }}">
-                </label>
             </div>
         </section>
 
@@ -419,6 +541,28 @@ function updateToggles() {
   if (multiLocation) {
     multiLocation.classList.toggle('hidden', !['Personal care home / nursing home', 'Residence', 'Other funeral home', 'Other'].includes(locationType));
   }
+  const obituaryRequest = document.querySelector('[name="obituary_request"]')?.value || '';
+  const obituaryNewspaper = document.querySelector('[name="obituary_newspaper"]')?.value || '';
+  const obituarySameText = document.querySelector('[name="obituary_same_text"]')?.value || '';
+  const existingStatus = document.querySelector('[name="obituary_existing_status"]')?.value || '';
+  document.querySelectorAll('[data-toggle-target="obituary_request_newspaper"]').forEach((el) => {
+    el.classList.toggle('hidden', !['newspaper', 'both'].includes(obituaryRequest));
+  });
+  document.querySelectorAll('[data-toggle-target="obituary_request_website"]').forEach((el) => {
+    el.classList.toggle('hidden', !['website', 'both'].includes(obituaryRequest));
+  });
+  document.querySelectorAll('[data-toggle-target="obituary_request_multi"]').forEach((el) => {
+    el.classList.toggle('hidden', !['website', 'newspaper', 'both'].includes(obituaryRequest));
+  });
+  document.querySelectorAll('[data-toggle-target="obituary_same_text_same_or_single"]').forEach((el) => {
+    el.classList.toggle('hidden', obituaryRequest === 'both' && obituarySameText === 'different');
+  });
+  document.querySelectorAll('[data-toggle-target="obituary_existing_status_text_multi"]').forEach((el) => {
+    el.classList.toggle('hidden', !['ready', 'started'].includes(existingStatus));
+  });
+  document.querySelectorAll('[data-toggle-target="obituary_text_blocks_multi"]').forEach((el) => {
+    el.classList.toggle('hidden', !['website', 'newspaper', 'both'].includes(obituaryRequest));
+  });
   const maritalStatus = document.querySelector('[name="marital_status"]')?.value || '';
   const relationship = document.querySelector('[name="relationship_to_deceased"]')?.value || '';
   const familyName = document.querySelector('[name="family_name"]')?.value || '';
@@ -438,9 +582,32 @@ function updateToggles() {
   if (partnerCurrentLegalName && showPartner && isContactPartner && reusePartner === 'yes' && familyName.trim()) {
     partnerCurrentLegalName.value = familyName.trim();
   }
+  const estimateCard = document.querySelector('[data-obituary-estimate-card]');
+  const wordCountEl = document.querySelector('[data-obituary-wordcount]');
+  const estimateEl = document.querySelector('[data-obituary-estimate]');
+  const paperTextarea = document.querySelector('[name="newspaper_obituary_text"]');
+  const sharedTextarea = document.querySelector('[name="obituary_text"]');
+  let paperText = '';
+  if (obituaryRequest === 'newspaper' || (obituaryRequest === 'both' && obituarySameText === 'different')) {
+    paperText = paperTextarea?.value || '';
+  } else if (obituaryRequest === 'both' || obituaryRequest === 'newspaper') {
+    paperText = sharedTextarea?.value || '';
+  }
+  const words = (paperText.trim().match(/\S+/g) || []).length;
+  const roundUp50 = (n) => Math.ceil(n / 50) * 50;
+  let estimate = words ? roundUp50((words * 2) + 100) : 0;
+  if ((document.querySelector('[name="newspaper_photo_choice"]')?.value || '') === 'colour' && estimate) {
+    estimate += 65;
+  }
+  if (estimateCard) {
+    estimateCard.classList.toggle('hidden', !['newspaper', 'both'].includes(obituaryRequest));
+  }
+  if (wordCountEl) wordCountEl.textContent = `Word count: ${words}`;
+  if (estimateEl) estimateEl.textContent = `Estimated total: $${estimate}`;
 }
-document.querySelectorAll('[data-toggle-source]').forEach((source) => {
+document.querySelectorAll('[data-toggle-source], [name="newspaper_photo_choice"], [name="newspaper_obituary_text"], [name="obituary_text"], [name="website_obituary_text"]').forEach((source) => {
   source.addEventListener('change', updateToggles);
+  source.addEventListener('input', updateToggles);
 });
 prev.addEventListener('click', () => { if (current > 0) { current -= 1; renderStep(); } });
 next.addEventListener('click', () => { if (current < panels.length - 1) { current += 1; renderStep(); } });
