@@ -41,5 +41,18 @@
     {% endwith %}
     {% block content %}{% endblock %}
 </main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const buttons = document.querySelectorAll("[data-step-nav]");
+  buttons.forEach(btn=>{
+    btn.addEventListener("click", function(){
+      const target = document.getElementById(this.getAttribute("data-step-nav"));
+      if(target){ target.scrollIntoView({behavior:"smooth"}); }
+    });
+  });
+});
+</script>
+
 </body>
 </html>
