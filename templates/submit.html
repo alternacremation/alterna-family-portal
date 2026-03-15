@@ -14,15 +14,20 @@
         <p class="eyebrow">Family intake</p>
         <h1>We’ll guide you through a few simple steps.</h1>
         <p>This testing version uses Alterna-inspired colours and softer language. All fields are optional for now, so you can focus on flow and clarity before anything becomes client-facing.</p>
+        <div class="autosave-note card inner-card subtle-card left-align">
+            <p><strong>Your progress is automatically saved on this device.</strong></p>
+            <p class="mini">You can leave this page and come back later using the same link and browser.</p>
+            <p class="mini autosave-status" data-autosave-status>Not saved yet.</p>
+        </div>
     </div>
 
-    <div class="wizard-bar">
+    <div class="wizard-bar" aria-label="Portal sections">
         {% for step in wizard_steps %}
-        <div class="wizard-step{% if loop.first %} active{% endif %}" data-step-pill>{{ loop.index }}. {{ step }}</div>
+        <button type="button" class="wizard-step{% if loop.first %} active{% endif %}" data-step-pill data-step-index="{{ loop.index0 }}">{{ loop.index }}. {{ step }}</button>
         {% endfor %}
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="form-grid wizard-form" novalidate>
+    <form method="post" enctype="multipart/form-data" class="form-grid wizard-form" novalidate data-autosave-form>
         <section class="wizard-panel active" data-step="1">
             <h2>Start here</h2>
             <div class="grid two">
@@ -41,7 +46,7 @@
                         <select name="preplanning_for">
                             <option value="">Select</option>
                             <option value="myself" {% if preplanning_for == 'myself' %}selected{% endif %}>Myself</option>
-                            <option value="someone_else" {% if preplanning_for == 'someone_else' %}selected{% endif %}>Someone else</option>
+                            <option value="someone_else" {% if preplanning_for == 'someone_else' %}selected{% endif %}>No</option>
                         </select>
                     </label>
                 </div>
@@ -179,6 +184,9 @@
                     <input name="industry" value="{{ form_data.get('industry', '') }}">
                     <span class="mini">If retired, enter the most recent industry.</span>
                 </label>
+                <label>Social Insurance Number (SIN)
+                    <input name="sin_last_four" value="{{ form_data.get('sin_last_four', '') }}">
+                </label>
                 <label>Usual residence
                     <input name="usual_residence" value="{{ form_data.get('usual_residence', '') }}">
                 </label>
@@ -206,14 +214,14 @@
                     {% set rel = form_data.get('relationship_to_deceased', '') %}
                     {% set reuse = form_data.get('reuse_contact_for_partner', '') %}
                     <div class="full toggle-block {% if rel not in ['Spouse', 'Common law partner'] %}hidden{% endif %}" data-contact-partner-helper>
-                        <label>Use some of your information above for the partner section?
+                        <label>Is the spouse or common law partner named above you?
                             <select name="reuse_contact_for_partner" data-toggle-source="reuse_contact_for_partner">
                                 <option value="">Select</option>
-                                <option value="yes" {% if reuse == 'yes' %}selected{% endif %}>Yes, use my name above for the partner’s current legal name</option>
-                                <option value="no" {% if reuse == 'no' %}selected{% endif %}>No, I will enter it manually</option>
+                                <option value="yes" {% if reuse == 'yes' %}selected{% endif %}>Yes</option>
+                                <option value="no" {% if reuse == 'no' %}selected{% endif %}>No</option>
                             </select>
                         </label>
-                        <p class="mini">This is helpful if the person completing the form is the spouse or common law partner.</p>
+                        <p class="mini">If yes, we will reuse what we can from the information you already entered above.</p>
                     </div>
                     <label>Partner’s full name at birth
                         <input name="partner_birth_name" value="{{ form_data.get('partner_birth_name', '') }}">
@@ -257,18 +265,18 @@
                 </label>
                 <div class="full toggle-block {% if will_status != 'Yes' %}hidden{% endif %}" data-toggle-target="will_status" data-toggle-value="Yes">
                     <div class="grid two nested-grid">
-                        <label>Who is the executor?
+                        <label>Is the executor you?
                             {% set same = form_data.get('executor_is_contact', '') %}
                             <select name="executor_is_contact" data-toggle-source="executor_is_contact">
                                 <option value="">Select</option>
-                                <option value="same_person" {% if same == 'same_person' %}selected{% endif %}>Same person as above</option>
-                                <option value="other_person" {% if same == 'other_person' %}selected{% endif %}>Someone else</option>
+                                <option value="same_person" {% if same == 'same_person' %}selected{% endif %}>Yes</option>
+                                <option value="other_person" {% if same == 'other_person' %}selected{% endif %}>No</option>
                             </select>
                         </label>
 
                         <div class="toggle-block {% if same != 'other_person' %}hidden{% endif %} full" data-toggle-target="executor_is_contact" data-toggle-value="other_person">
                             <div class="grid two nested-grid">
-                                <label>Executor name
+                                <label>Executor full name
                                     <input name="executor_name" value="{{ form_data.get('executor_name', '') }}">
                                 </label>
                                 <label>Executor phone
@@ -342,9 +350,6 @@
                         <span class="mini">Examples include rings, watches, necklaces, or other personal items to be returned before cremation.</span>
                     </label>
                 </div>
-                <label>Social Insurance Number (SIN)
-                    <input name="sin_last_four" value="{{ form_data.get('sin_last_four', '') }}">
-                </label>
             </div>
         </section>
 
@@ -566,6 +571,9 @@ const pills = Array.from(document.querySelectorAll('[data-step-pill]'));
 const prev = document.querySelector('[data-prev]');
 const next = document.querySelector('[data-next]');
 const submit = document.querySelector('[data-submit]');
+const form = document.querySelector('[data-autosave-form]');
+const autosaveStatus = document.querySelector('[data-autosave-status]');
+const storageKey = `alterna-family-portal-draft:${window.location.pathname}`;
 let current = 0;
 
 function formatDateForInput(date) {
@@ -603,7 +611,6 @@ function updatePublicationDateChoices() {
   const hiddenInput = document.querySelector('[data-publication-hidden]');
   if (!select || !hiddenInput) return;
   const currentHidden = hiddenInput.value || '';
-  const existingCustom = customInput?.value || '';
   if (select.options.length <= 1) {
     const saturdays = nextSelectableSaturdays();
     saturdays.forEach((date, index) => {
@@ -636,7 +643,11 @@ function updatePublicationDateChoices() {
 const currentStepLabel = document.querySelector('[data-current-step-label-header]');
 function renderStep() {
   panels.forEach((panel, index) => panel.classList.toggle('active', index === current));
-  pills.forEach((pill, index) => pill.classList.toggle('active', index <= current));
+  pills.forEach((pill, index) => {
+    pill.classList.toggle('active', index === current);
+    pill.classList.toggle('is-complete', index < current);
+    pill.setAttribute('aria-current', index === current ? 'step' : 'false');
+  });
   prev.hidden = current === 0;
   next.hidden = current === panels.length - 1;
   submit.hidden = current !== panels.length - 1;
@@ -658,7 +669,6 @@ function updateToggles() {
     multiLocation.classList.toggle('hidden', !['Personal care home / nursing home', 'Residence', 'Other funeral home', 'Other'].includes(locationType));
   }
   const obituaryRequest = document.querySelector('[name="obituary_request"]')?.value || '';
-  const obituaryNewspaper = document.querySelector('[name="obituary_newspaper"]')?.value || '';
   const obituarySameText = document.querySelector('[name="obituary_same_text"]')?.value || '';
   const existingStatus = document.querySelector('[name="obituary_existing_status"]')?.value || '';
   document.querySelectorAll('[data-toggle-target="obituary_request_newspaper"]').forEach((el) => {
@@ -722,12 +732,91 @@ function updateToggles() {
   if (estimateEl) estimateEl.textContent = `Estimated total: $${estimate}`;
   updatePublicationDateChoices();
 }
-document.querySelectorAll('[data-toggle-source], [name="newspaper_photo_choice"], [name="newspaper_obituary_text"], [name="obituary_text"], [name="website_obituary_text"], [data-publication-saturday-select], [data-publication-custom-input]').forEach((source) => {
-  source.addEventListener('change', updateToggles);
-  source.addEventListener('input', updateToggles);
+function readDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(storageKey) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+function writeStatus(message) {
+  if (autosaveStatus) autosaveStatus.textContent = message;
+}
+function saveDraft() {
+  if (!form) return;
+  const payload = { currentStep: current, values: {} };
+  Array.from(form.elements).forEach((field) => {
+    if (!field.name || field.type === 'file') return;
+    if (field.type === 'checkbox') {
+      payload.values[field.name] = field.checked;
+    } else if (field.type === 'radio') {
+      if (field.checked) payload.values[field.name] = field.value;
+    } else {
+      payload.values[field.name] = field.value;
+    }
+  });
+  localStorage.setItem(storageKey, JSON.stringify(payload));
+  writeStatus(`Saved ✓ ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+}
+function restoreDraft() {
+  const draft = readDraft();
+  if (!draft.values) return;
+  Array.from(form.elements).forEach((field) => {
+    if (!field.name || field.type === 'file') return;
+    const saved = draft.values[field.name];
+    if (saved === undefined || saved === null) return;
+    if (field.type === 'checkbox') {
+      if (!field.checked) field.checked = Boolean(saved);
+    } else if (field.type === 'radio') {
+      field.checked = field.value === saved;
+    } else if (!field.value) {
+      field.value = saved;
+    }
+  });
+  if (typeof draft.currentStep === 'number') {
+    current = Math.max(0, Math.min(draft.currentStep, panels.length - 1));
+  }
+  writeStatus('Saved draft restored on this device.');
+}
+function handleFieldActivity() {
+  updateToggles();
+  saveDraft();
+}
+
+document.querySelectorAll('[data-toggle-source], [name="newspaper_photo_choice"], [name="newspaper_obituary_text"], [name="obituary_text"], [name="website_obituary_text"], [data-publication-saturday-select], [data-publication-custom-input], .wizard-form input, .wizard-form textarea, .wizard-form select').forEach((source) => {
+  source.addEventListener('change', handleFieldActivity);
+  source.addEventListener('input', handleFieldActivity);
 });
-prev.addEventListener('click', () => { if (current > 0) { current -= 1; renderStep(); } });
-next.addEventListener('click', () => { if (current < panels.length - 1) { current += 1; renderStep(); } });
+prev.addEventListener('click', () => {
+  if (current > 0) {
+    current -= 1;
+    renderStep();
+    saveDraft();
+  }
+});
+next.addEventListener('click', () => {
+  if (current < panels.length - 1) {
+    current += 1;
+    renderStep();
+    saveDraft();
+  }
+});
+pills.forEach((pill) => {
+  pill.addEventListener('click', () => {
+    const target = Number(pill.getAttribute('data-step-index'));
+    if (Number.isNaN(target)) return;
+    current = target;
+    renderStep();
+    saveDraft();
+  });
+});
+if (form) {
+  form.addEventListener('submit', () => {
+    localStorage.removeItem(storageKey);
+    writeStatus('Submitting…');
+  });
+}
+restoreDraft();
 updatePublicationDateChoices();
 updateToggles();
 renderStep();
