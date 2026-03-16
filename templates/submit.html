@@ -31,7 +31,17 @@
         <section class="wizard-panel active" data-step="1">
             <h2>Start here</h2>
             <div class="grid two">
-                <label class="full">Has a death occurred?
+                <label class="full">Has a death occurred?</label>
+
+                <label>Date of death
+                    <input type="date" name="date_of_death" value="{{ form_data.get('date_of_death','') }}">
+                </label>
+                <label class="inline-checkbox">
+                    <input type="checkbox" name="date_of_death_unknown" value="1" {% if form_data.get('date_of_death_unknown') %}checked{% endif %}>
+                    Date of death unknown / unsure
+                </label>
+
+<label style='display:none'>
                     {% set intake = form_data.get('intake_type', '') %}
                     <select name="intake_type" data-toggle-source="intake_type">
                         <option value="">Select</option>
