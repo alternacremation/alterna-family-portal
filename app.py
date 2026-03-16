@@ -150,6 +150,7 @@ def init_db() -> None:
         family_name TEXT NOT NULL,
         family_email TEXT NOT NULL,
         family_phone TEXT NOT NULL,
+        family_address TEXT,
         relationship_to_deceased TEXT,
         intake_type TEXT,
         preplanning_for TEXT,
@@ -318,6 +319,7 @@ def init_db() -> None:
             "previous_partner_place_of_birth": "ALTER TABLE submissions ADD COLUMN previous_partner_place_of_birth TEXT",
             "children_details": "ALTER TABLE submissions ADD COLUMN children_details TEXT",
             "mother_maiden_name": "ALTER TABLE submissions ADD COLUMN mother_maiden_name TEXT",
+            "family_address": "ALTER TABLE submissions ADD COLUMN family_address TEXT",
             "informant_email": "ALTER TABLE submissions ADD COLUMN informant_email TEXT",
             "informant_phone": "ALTER TABLE submissions ADD COLUMN informant_phone TEXT",
             "informant_address": "ALTER TABLE submissions ADD COLUMN informant_address TEXT",
@@ -664,6 +666,10 @@ def submission_dict_from_form(form: Any) -> dict[str, Any]:
     family_name = form.get("family_name", "").strip()
     relationship = form.get("relationship_to_deceased", "").strip()
     marital_status = form.get("marital_status", "").strip()
+    if relationship == "Spouse":
+        marital_status = "Married"
+    elif relationship == "Common law partner":
+        marital_status = "Common law"
     reuse_contact_for_partner = form.get("reuse_contact_for_partner", "").strip()
     partner_current_legal_name = form.get("partner_current_legal_name", "").strip()
     if (
@@ -680,6 +686,7 @@ def submission_dict_from_form(form: Any) -> dict[str, Any]:
         "family_name": form.get("family_name", "").strip(),
         "family_email": form.get("family_email", "").strip(),
         "family_phone": cleaned_phone(form.get("family_phone", "")),
+        "family_address": multiline_compact(form.get("family_address", "")),
         "relationship_to_deceased": form.get("relationship_to_deceased", "").strip(),
         "will_status": form.get("will_status", "").strip(),
         "executor_is_contact": form.get("executor_is_contact", "").strip(),
@@ -699,7 +706,8 @@ def submission_dict_from_form(form: Any) -> dict[str, Any]:
         "birth_region_country": form.get("birth_region_country", "").strip(),
         "citizenship": "",
         "sin_last_four": form.get("sin_last_four", "").strip(),
-        "marital_status": form.get("marital_status", "").strip(),
+        "marital_status": marital_status,
+
         "spouse_name": form.get("spouse_name", "").strip(),
         "partner_birth_name": form.get("partner_birth_name", "").strip(),
         "partner_current_legal_name": partner_current_legal_name,
@@ -815,7 +823,7 @@ def upsert_submission(form_data: dict[str, Any], existing_row: sqlite3.Row | Non
         cursor = db.execute(
             """
             INSERT INTO submissions (
-                created_at, updated_at, case_reference, family_name, family_email, family_phone,
+                created_at, updated_at, case_reference, family_name, family_email, family_phone, family_address,
                 relationship_to_deceased, intake_type, preplanning_for, will_status, executor_is_contact, executor_name, executor_phone, executor_email, portal_token, preferred_name, family_message,
                 deceased_first_name, deceased_middle_name, deceased_last_name, deceased_gender,
                 date_of_birth, date_of_death, place_of_death, birth_city, birth_region_country,

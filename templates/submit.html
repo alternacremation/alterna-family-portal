@@ -106,6 +106,9 @@
                 <label>Your phone number
                     <input name="family_phone" value="{{ form_data.get('family_phone', '') }}">
                 </label>
+                <label class="full">Your address
+                    <textarea name="family_address" rows="3">{{ form_data.get('family_address', '') }}</textarea>
+                </label>
                 <label>Your relationship to the deceased
                     {% set rel = form_data.get('relationship_to_deceased', '') %}
                     <select name="relationship_to_deceased">
@@ -148,15 +151,23 @@
                 <label>Date of death
                     <input type="date" name="date_of_death" value="{{ form_data.get('date_of_death', '') }}">
                 </label>
-                <label>Marital status
-                    {% set marital = form_data.get('marital_status', '') %}
-                    <select name="marital_status" data-toggle-source="marital_status">
-                        <option value="">Select</option>
-                        {% for option in ['Never married', 'Married', 'Common law', 'Widowed', 'Separated', 'Divorced'] %}
-                        <option value="{{ option }}" {% if marital == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
+                {% set contact_rel = form_data.get('relationship_to_deceased', '') %}
+                {% set inferred_marital = 'Married' if contact_rel == 'Spouse' else ('Common law' if contact_rel == 'Common law partner' else '') %}
+                {% set marital = form_data.get('marital_status', '') or inferred_marital %}
+                <div class="full toggle-block {% if inferred_marital %}hidden{% endif %}" data-marital-manual-wrap>
+                    <label>Marital status
+                        <select name="marital_status" data-toggle-source="marital_status">
+                            <option value="">Select</option>
+                            {% for option in ['Never married', 'Married', 'Common law', 'Widowed', 'Separated', 'Divorced'] %}
+                            <option value="{{ option }}" {% if marital == option %}selected{% endif %}>{{ option }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <div class="full mini {% if not inferred_marital %}hidden{% endif %}" data-marital-inferred-note>
+                    Marital status has been set to <strong>{{ inferred_marital }}</strong> based on your relationship to the deceased.
+                </div>
+                <input type="hidden" name="marital_status_inferred" value="{{ inferred_marital }}">
                 <label>City of birth
                     <input name="birth_city" value="{{ form_data.get('birth_city', '') }}">
                 </label>
@@ -201,7 +212,7 @@
 
                 {% set ms = form_data.get('marital_status', '') %}
                 <div class="full section-subgroup {% if ms not in ['Married', 'Common law'] %}hidden{% endif %}" data-partner-section>
-                    <h3>Spouse or common law partner</h3>
+                    <h3>Spouse or common-law partner details</h3>
                     <p class="mini">We ask these questions near the end because families often assume the parents section refers to the spouse. It does not.</p>
                 </div>
                 <div class="full grid two hidden" data-partner-fields>
@@ -685,6 +696,31 @@ function updateToggles() {
   });
   const maritalStatus = document.querySelector('[name="marital_status"]')?.value || '';
   const relationship = document.querySelector('[name="relationship_to_deceased"]')?.value || '';
+  const maritalSelect = document.querySelector('[name="marital_status"]');
+  const maritalManualWrap = document.querySelector('[data-marital-manual-wrap]');
+  const maritalInferredNote = document.querySelector('[data-marital-inferred-note]');
+  const maritalInferredHidden = document.querySelector('[name="marital_status_inferred"]');
+  if (relationship === 'Spouse') {
+    if (maritalSelect) maritalSelect.value = 'Married';
+    if (maritalInferredHidden) maritalInferredHidden.value = 'Married';
+    if (maritalManualWrap) maritalManualWrap.classList.add('hidden');
+    if (maritalInferredNote) {
+      maritalInferredNote.classList.remove('hidden');
+      maritalInferredNote.innerHTML = 'Marital status has been set to <strong>Married</strong> based on your relationship to the deceased.';
+    }
+  } else if (relationship === 'Common law partner') {
+    if (maritalSelect) maritalSelect.value = 'Common law';
+    if (maritalInferredHidden) maritalInferredHidden.value = 'Common law';
+    if (maritalManualWrap) maritalManualWrap.classList.add('hidden');
+    if (maritalInferredNote) {
+      maritalInferredNote.classList.remove('hidden');
+      maritalInferredNote.innerHTML = 'Marital status has been set to <strong>Common law</strong> based on your relationship to the deceased.';
+    }
+  } else {
+    if (maritalInferredHidden) maritalInferredHidden.value = '';
+    if (maritalManualWrap) maritalManualWrap.classList.remove('hidden');
+    if (maritalInferredNote) maritalInferredNote.classList.add('hidden');
+  }
   const familyName = document.querySelector('[name="family_name"]')?.value || '';
   const reusePartner = document.querySelector('[name="reuse_contact_for_partner"]')?.value || '';
   const partnerSection = document.querySelector('[data-partner-section]');
